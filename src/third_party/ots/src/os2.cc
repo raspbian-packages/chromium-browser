@@ -5,6 +5,7 @@
 #include "os2.h"
 
 #include "head.h"
+#include <cstddef>
 
 // OS/2 - OS/2 and Windows Metrics
 // http://www.microsoft.com/opentype/otspec/os2.htm

@@ -12,6 +12,7 @@
 #endif
 #include <cstddef>
 #include <string>
+#include <cstddef>
 
 typedef signed char         schar;
 typedef signed char         int8;

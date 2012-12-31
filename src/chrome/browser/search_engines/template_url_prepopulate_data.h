@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #include "base/string16.h"
 #include "chrome/browser/search_engines/search_engine_type.h"
