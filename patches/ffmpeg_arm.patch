@@ -1,0 +1,27 @@
+description: ffmpeg compatibility on the arm arch
+Index: sid/src/third_party/ffmpeg/ffmpeg_generated.gypi
+===================================================================
+--- sid.orig/src/third_party/ffmpeg/ffmpeg_generated.gypi	2012-09-26 07:52:28.000000000 +0200
++++ sid/src/third_party/ffmpeg/ffmpeg_generated.gypi	2012-09-26 11:04:55.566708822 +0200
+@@ -179,21 +179,14 @@
+         'libavcodec/arm/dsputil_arm.S',
+         'libavcodec/arm/dsputil_armv6.S',
+         'libavcodec/arm/dsputil_init_arm.c',
+-        'libavcodec/arm/dsputil_init_armv5te.c',
+         'libavcodec/arm/dsputil_init_armv6.c',
+-        'libavcodec/arm/dsputil_init_vfp.c',
+-        'libavcodec/arm/dsputil_vfp.S',
+         'libavcodec/arm/fft_fixed_init_arm.c',
+         'libavcodec/arm/fft_init_arm.c',
+         'libavcodec/arm/fmtconvert_init_arm.c',
+-        'libavcodec/arm/fmtconvert_vfp.S',
+         'libavcodec/arm/h264pred_init_arm.c',
+         'libavcodec/arm/jrevdct_arm.S',
+         'libavcodec/arm/mpegvideo_arm.c',
+-        'libavcodec/arm/mpegvideo_armv5te.c',
+-        'libavcodec/arm/mpegvideo_armv5te_s.S',
+         'libavcodec/arm/simple_idct_arm.S',
+-        'libavcodec/arm/simple_idct_armv5te.S',
+         'libavcodec/arm/simple_idct_armv6.S',
+         'libavcodec/arm/vp3dsp_init_arm.c',
+         'libavcodec/arm/vp8_armv6.S',
