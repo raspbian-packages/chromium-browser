@@ -11,7 +11,7 @@
 #include "base/string_number_conversions.h"
 #include "content/browser/speech/audio_buffer.h"
 #include "third_party/flac/flac.h"
-#include "third_party/speex/speex.h"
+#include <speex/speex.h>
 
 using std::string;
 using speech::AudioChunk;
