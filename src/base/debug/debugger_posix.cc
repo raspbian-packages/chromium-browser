@@ -220,7 +220,7 @@ bool BeingDebugged() {
 } while (0)
 #else
 // ARM && !ANDROID
-#define DEBUG_BREAK() asm("bkpt 0")
+#define DEBUG_BREAK() asm("nop")
 #endif
 #else
 #define DEBUG_BREAK() asm("int3")
