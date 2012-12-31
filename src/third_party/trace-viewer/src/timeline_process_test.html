@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Copyright (c) 2012 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+<title>TimelineProcess tests</title>
+<script src="base.js"></script>
+<style>
+  .timeline-view {
+    border: 1px solid black;
+    margin: 10px;
+  }
+  .timeline-find-dialog {
+    border: 1px solid black;
+    margin: 10px;
+  }
+</style>
+</head>
+<body>
+<script>
+'use strict';
+
+base.defineModule('timeline_process_test')
+    .dependsOn('unittest',
+               'test_utils',
+               'timeline_model')
+    .runAllTests(function() {
+
+  var tests = {};
+
+  var TimelineProcess = tracing.TimelineProcess;
+
+  tests.testGetOrCreateCounter = function() {
+    var process = new TimelineProcess(7);
+    var ctrBar = process.getOrCreateCounter('foo', 'bar');
+    var ctrBar2 = process.getOrCreateCounter('foo', 'bar');
+    assertEquals(ctrBar2, ctrBar);
+  };
+
+  tests.testShiftTimestampsForward = function() {
+    var process = new TimelineProcess(7);
+    var ctr = process.getOrCreateCounter('foo', 'bar');
+    var thread = process.getOrCreateThread(1);
+
+    var shiftCount = 0;
+    thread.shiftTimestampsForward = function(ts) {
+      if (ts == 0.32)
+        shiftCount++;
+    };
+    ctr.shiftTimestampsForward = function(ts) {
+      if (ts == 0.32)
+        shiftCount++;
+    };
+    process.shiftTimestampsForward(0.32);
+    assertEquals(2, shiftCount);
+  };
+
+  return tests;
+});
+</script>
+</body>
+</html>

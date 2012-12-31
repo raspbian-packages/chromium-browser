@@ -1,0 +1,89 @@
+# -*- python -*-
+# Copyright (c) 2012 The Native Client Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+Import('env')
+
+nameservice_test_nexe = env.ComponentProgram(
+                            'nameservice_test',
+                            'nameservice_test.c',
+                            EXTRA_LIBS=['srpc',
+                                        'imc_syscalls',
+                                        'platform',
+                                        'gio',
+                                        '${PTHREAD_LIBS}',
+                                        '${NONIRT_LIBS}'])
+node = env.CommandSelLdrTestNacl(
+    'nameservice_test.out',
+    nameservice_test_nexe)
+env.AddNodeToTestSuite(node, ['small_tests'], 'run_nameservice_test')
+
+
+srpc_ns_obj = env.ComponentObject('srpc_nameservice_test.o',
+                                  'srpc_nameservice_test.c')
+srpc_ns_nexe_name = env.ProgramNameForNmf('srpc_nameservice_test')
+srpc_ns_nexe = env.ComponentProgram(srpc_ns_nexe_name,
+                                    srpc_ns_obj,
+                                    EXTRA_LIBS=[
+                                        'srpc',
+                                        'platform',
+                                        'gio',
+                                        'imc',
+                                        'imc_syscalls',
+                                        '${PTHREAD_LIBS}',
+                                        '${NON_PPAPI_BROWSER_LIBS}'])
+env.Publish(srpc_ns_nexe_name, 'run',
+            ['srpc_nameservice_test.html'])
+
+# sel_universal test
+
+node = env.SelUniversalTest(
+    'srpc_nameservice_test.out',
+    srpc_ns_nexe,
+    sel_universal_flags=['--uses_reverse_service',
+                         '--command_file',
+                         env.File('srpc_nameservice_test.stdin')],
+    stdout_golden=env.File('srpc_nameservice_test.stdout'),
+    # Slight misnomer: actually just enables the IRT.
+    uses_ppapi=True
+    )
+env.AddNodeToTestSuite(node,
+                       ['small_tests'],
+                       'run_srpc_nameservice_test')
+
+# postmessage version of srpc_nameservice_test
+
+pm_ns_obj = env.ComponentObject('pm_nameservice_test.o',
+                                'pm_nameservice_test.cc')
+pm_ns_nexe_name = env.ProgramNameForNmf('pm_nameservice_test')
+pm_ns_nexe = env.ComponentProgram(pm_ns_nexe_name,
+                                  pm_ns_obj,
+                                  EXTRA_LIBS=['nacl_ppapi_util',
+                                              'ppapi_cpp',
+                                              '${PPAPI_LIBS}',
+                                              'pthread',
+                                              'srpc',
+                                              'platform',
+                                              'gio',
+                                              'imc',
+                                              'imc_syscalls',
+                                              ])
+env.Publish(pm_ns_nexe_name, 'run',
+            ['pm_nameservice_test.html'])
+
+# chrome_browser_tests
+
+node = env.PPAPIBrowserTester(
+    'pm_nameservice_browser_test.out',
+    url='pm_nameservice_test.html',
+    nmf_names=['pm_nameservice_test'],
+    files=env.ExtractPublishedFiles(pm_ns_nexe_name),
+    args=['--debug'],
+    osenv=['NACLVERBOSITY=0:pp_weak_ref=0:weak_ref=0']
+    )
+
+env.AddNodeToTestSuite(node,
+                       ['chrome_browser_tests'],
+                       'run_pm_nameservice_chrome_browser_test',
+                       is_broken=env.PPAPIBrowserTesterIsBroken())

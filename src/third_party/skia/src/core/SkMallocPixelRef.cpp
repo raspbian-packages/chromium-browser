@@ -1,0 +1,71 @@
+
+/*
+ * Copyright 2011 Google Inc.
+ *
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include "SkMallocPixelRef.h"
+#include "SkBitmap.h"
+#include "SkFlattenable.h"
+
+SkMallocPixelRef::SkMallocPixelRef(void* storage, size_t size,
+                                   SkColorTable* ctable, bool ownPixels) {
+    if (NULL == storage) {
+        SkASSERT(ownPixels);
+        storage = sk_malloc_throw(size);
+    }
+    fStorage = storage;
+    fSize = size;
+    fCTable = ctable;
+    SkSafeRef(ctable);
+    fOwnPixels = ownPixels;
+    
+    this->setPreLocked(fStorage, fCTable);
+}
+
+SkMallocPixelRef::~SkMallocPixelRef() {
+    SkSafeUnref(fCTable);
+    if (fOwnPixels) {
+        sk_free(fStorage);
+    }
+}
+
+void* SkMallocPixelRef::onLockPixels(SkColorTable** ct) {
+    *ct = fCTable;
+    return fStorage;
+}
+
+void SkMallocPixelRef::onUnlockPixels() {
+    // nothing to do
+}
+
+void SkMallocPixelRef::flatten(SkFlattenableWriteBuffer& buffer) const {
+    this->INHERITED::flatten(buffer);
+
+    buffer.write32(fSize);
+    buffer.writePad(fStorage, fSize);
+    if (fCTable) {
+        buffer.writeBool(true);
+        buffer.writeFlattenable(fCTable);
+    } else {
+        buffer.writeBool(false);
+    }
+}
+
+SkMallocPixelRef::SkMallocPixelRef(SkFlattenableReadBuffer& buffer)
+        : INHERITED(buffer, NULL) {
+    fSize = buffer.readU32();
+    fStorage = sk_malloc_throw(fSize);
+    buffer.read(fStorage, fSize);
+    if (buffer.readBool()) {
+        fCTable = static_cast<SkColorTable*>(buffer.readFlattenable());
+    } else {
+        fCTable = NULL;
+    }
+    fOwnPixels = true;
+
+    this->setPreLocked(fStorage, fCTable);
+}
+
+SK_DEFINE_FLATTENABLE_REGISTRAR(SkMallocPixelRef)

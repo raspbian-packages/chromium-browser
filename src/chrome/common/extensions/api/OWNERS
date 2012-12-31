@@ -1,0 +1,9 @@
+# *.json
+# See chrome/common/extensions/OWNERS
+
+# devtools_api.json
+caseq@chromium.org
+pfeldman@chromium.org
+
+# For API documentation
+kathyw@chromium.org

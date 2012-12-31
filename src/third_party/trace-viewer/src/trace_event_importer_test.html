@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright (c) 2012 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+<title>TraceEventImporter tests</title>
+<script src="base.js"></script>
+</head>
+<body>
+<script>
+'use strict';
+
+base.defineModule('trace_event_importer_test')
+    .dependsOn('unittest',
+               'test_utils',
+               'trace_event_importer')
+    .runAllTests(function() {
+
+var tests = {};
+var findSliceNamed = test_utils.findSliceNamed;
+
+tests.testCanImportEmpty = function() {
+  self.assertFalse(tracing.TraceEventImporter.canImport([]));
+  self.assertFalse(tracing.TraceEventImporter.canImport(''));
+}
+
+tests.testBasicSingleThreadNonnestedParsing = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 52, ts: 520, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'},
+    {name: 'b', args: {}, pid: 52, ts: 629, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'b', args: {}, pid: 52, ts: 631, cat: 'foo', tid: 53, ph: 'E'}
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  assertEquals(1, m.numProcesses);
+  var p = m.processes[52];
+  assertNotUndefined(p);
+
+  assertEquals(1, p.numThreads);
+  var t = p.threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(53, t.tid);
+  var subRow = t.subRows[0];
+  assertEquals(2, subRow.length);
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertEquals(0, slice.start);
+  assertAlmostEquals((560 - 520) / 1000, slice.duration);
+  assertEquals(0, slice.subSlices.length);
+
+  slice = subRow[1];
+  assertEquals('b', slice.title);
+  assertAlmostEquals((629 - 520) / 1000, slice.start);
+  assertAlmostEquals((631 - 629) / 1000, slice.duration);
+  assertEquals(0, slice.subSlices.length);
+}
+
+tests.testArgumentDupeCreatesNonFailingImportError = function() {
+  var events = [
+    {name: 'a', args: {'x': 1}, pid: 1, ts: 520, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {'x': 2}, pid: 1, ts: 560, cat: 'foo', tid: 1, ph: 'E'},
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[1].threads[1];
+  var sA = findSliceNamed(t.slices, 'a');
+
+  assertEquals(2, sA.args.x);
+  assertEquals(m.importErrors.length, 1);
+}
+
+
+tests.testNestedParsing = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 3, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'a', args: {}, pid: 1, ts: 4, cat: 'foo', tid: 1, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events, false);
+  var t = m.processes[1].threads[1];
+
+  var sA = findSliceNamed(t.slices, 'a');
+  var sB = findSliceNamed(t.slices, 'b');
+
+  assertEquals('a', sA.title);
+  assertEquals(0.001, sA.start);
+  assertEquals(0.003, sA.duration);
+  assertArrayEquals([sB], sA.subSlices);
+
+  assertEquals('b', sB.title);
+  assertEquals(0.002, sB.start);
+  assertEquals(0.001, sB.duration);
+  assertArrayEquals([], sB.subSlices);
+
+  assertEquals(2, t.subRows.length);
+  assertArrayEquals([sA], t.subRows[0]);
+  assertArrayEquals([sB], t.subRows[1]);
+}
+
+tests.testAutoclosing = function() {
+  var events = [
+    // Slice that doesn't finish.
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+
+    // Slice that does finish to give an 'end time' to make autoclosing work.
+    {name: 'b', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 2, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 2, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  var p = m.processes[1];
+  var t = p.threads[1];
+  var subRow = t.subRows[0];
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertTrue(slice.didNotFinish);
+  assertEquals(0, slice.start);
+  assertEquals((2 - 1) / 1000, slice.duration);
+}
+
+tests.testAutoclosingLoneBegin = function() {
+  var events = [
+    // Slice that doesn't finish.
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  var p = m.processes[1];
+  var t = p.threads[1];
+  var subRow = t.subRows[0];
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertTrue(slice.didNotFinish);
+  assertEquals(0, slice.start);
+  assertEquals(0, slice.duration);
+}
+
+tests.testAutoclosingWithSubTasks = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'b1', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'b1', args: {}, pid: 1, ts: 3, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'b2', args: {}, pid: 1, ts: 3, cat: 'foo', tid: 1, ph: 'B'}
+  ];
+  var m = new tracing.TimelineModel(events, false);
+  var t = m.processes[1].threads[1];
+
+  var sA = findSliceNamed(t.slices, 'a');
+  var sB1 = findSliceNamed(t.slices, 'b1');
+  var sB2 = findSliceNamed(t.slices, 'b2');
+
+  // The subRow builder uses timestamp containment of a slice to determine
+  // nesting, rather than the sequential ordering of B/E events. In this case,
+  // the autocloser shuts everything at 0.003, leaving b2 with end=0.003 and b2
+  // with start==end==0.003. Thus, b2 gets placed inside b1, even though in the
+  // original trace, b2 follows b1.
+  assertEquals(3, t.subRows.length);
+  assertArrayEquals([sA], t.subRows[0]);
+  assertArrayEquals([sB1], t.subRows[1]);
+  assertArrayEquals([sB2], t.subRows[2]);
+}
+
+tests.testAutoclosingWithEventsOutsideRange = function() {
+  var events = [
+    // Slice that begins before min and ends after max of the other threads.
+    {name: 'a', args: {}, pid: 1, ts: 0, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 3, cat: 'foo', tid: 1, ph: 'B'},
+
+    // Slice that does finish to give an 'end time' to establish a basis
+    {name: 'b', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 2, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 2, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events, false);
+  var p = m.processes[1];
+  var t = p.threads[1];
+  assertEquals(2, t.slices.length);
+
+  var subRow = t.subRows[0];
+  assertEquals('a', subRow[0].title);
+  assertEquals(0, subRow[0].start);
+  assertEquals(0.003, subRow[0].duration);
+
+  var t2 = p.threads[2];
+  var subRow2 = t2.subRows[0];
+  assertEquals('b', subRow2[0].title);
+  assertEquals(0.001, subRow2[0].start);
+  assertEquals(0.001, subRow2[0].duration);
+
+  assertEquals(0.000, m.minTimestamp);
+  assertEquals(0.003, m.maxTimestamp);
+}
+
+tests.testNestedAutoclosing = function() {
+  var events = [
+    // Tasks that dont finish.
+    {name: 'a1', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a2', args: {}, pid: 1, ts: 1.5, cat: 'foo', tid: 1, ph: 'B'},
+
+    // Slice that does finish to give an 'end time' to make autoclosing work.
+    {name: 'b', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 2, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 2, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events, false);
+  var t1 = m.processes[1].threads[1];
+  var t2 = m.processes[1].threads[2];
+
+  var sA1 = findSliceNamed(t1.slices, 'a1');
+  var sA2 = findSliceNamed(t1.slices, 'a2');
+  var sB = findSliceNamed(t2.slices, 'b');
+
+  assertEquals(0.002, sA1.end);
+  assertEquals(0.002, sA2.end);
+
+  assertEquals(2, t1.subRows.length);
+  assertArrayEquals([sA1], t1.subRows[0]);
+  assertArrayEquals([sA2], t1.subRows[1]);
+
+  assertEquals(1, t2.subRows.length);
+  assertArrayEquals([sB], t2.subRows[0]);
+}
+
+tests.testTaskColoring = function() {
+  // The test below depends on hashing of 'a' != 'b'. Fail early if that
+  // assumption is incorrect.
+  assertNotEquals(tracing.getStringHash('a'), tracing.getStringHash('b'));
+
+  var events = [
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'b', args: {}, pid: 1, ts: 3, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 4, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'a', args: {}, pid: 1, ts: 5, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 6, cat: 'foo', tid: 1, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  var p = m.processes[1];
+  var t = p.threads[1];
+  var subRow = t.subRows[0];
+  var a1 = subRow[0];
+  assertEquals('a', a1.title);
+  var b = subRow[1];
+  assertEquals('b', b.title);
+  assertNotEquals(a1.colorId, b.colorId);
+  var a2 = subRow[0];
+  assertEquals('a', a2.title);
+  assertEquals(a1.colorId, a2.colorId);
+}
+
+tests.testMultipleThreadParsing = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'b', args: {}, pid: 1, ts: 3, cat: 'foo', tid: 2, ph: 'B'},
+    {name: 'b', args: {}, pid: 1, ts: 4, cat: 'foo', tid: 2, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  assertEquals(1, m.numProcesses);
+  var p = m.processes[1];
+  assertNotUndefined(p);
+
+  assertEquals(2, p.numThreads);
+
+  // Check thread 1.
+  var t = p.threads[1];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(1, t.tid);
+
+  var subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertEquals(0, slice.start);
+  assertEquals((2 - 1) / 1000, slice.duration);
+  assertEquals(0, slice.subSlices.length);
+
+  // Check thread 2.
+  var t = p.threads[2];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(2, t.tid);
+
+  subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  slice = subRow[0];
+  assertEquals('b', slice.title);
+  assertEquals((3 - 1) / 1000, slice.start);
+  assertEquals((4 - 3) / 1000, slice.duration);
+  assertEquals(0, slice.subSlices.length);
+}
+
+tests.testMultiplePidParsing = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'b', args: {}, pid: 2, ts: 3, cat: 'foo', tid: 2, ph: 'B'},
+    {name: 'b', args: {}, pid: 2, ts: 4, cat: 'foo', tid: 2, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  assertEquals(2, m.numProcesses);
+  var p = m.processes[1];
+  assertNotUndefined(p);
+
+  assertEquals(1, p.numThreads);
+
+  // Check process 1 thread 1.
+  var t = p.threads[1];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(1, t.tid);
+
+  var subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertEquals(0, slice.start);
+  assertEquals((2 - 1) / 1000, slice.duration);
+  assertEquals(0, slice.subSlices.length);
+
+  // Check process 2 thread 2.
+  var p = m.processes[2];
+  assertNotUndefined(p);
+  assertEquals(1, p.numThreads);
+  var t = p.threads[2];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(2, t.tid);
+
+  subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  slice = subRow[0];
+  assertEquals('b', slice.title);
+  assertEquals((3 - 1) / 1000, slice.start);
+  assertEquals((4 - 3) / 1000, slice.duration);
+  assertEquals(0, slice.subSlices.length);
+
+  // Check getAllThreads.
+  assertArrayEquals([m.processes[1].threads[1], m.processes[2].threads[2]],
+                    m.getAllThreads());
+}
+
+// Thread names.
+tests.testThreadNames = function() {
+  var events = [
+    {name: 'thread_name', args: {name: 'Thread 1'},
+      pid: 1, ts: 0, tid: 1, ph: 'M'},
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'b', args: {}, pid: 2, ts: 3, cat: 'foo', tid: 2, ph: 'B'},
+    {name: 'b', args: {}, pid: 2, ts: 4, cat: 'foo', tid: 2, ph: 'E'},
+    {name: 'thread_name', args: {name: 'Thread 2'},
+      pid: 2, ts: 0, tid: 2, ph: 'M'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  assertEquals('Thread 1', m.processes[1].threads[1].name);
+  assertEquals('Thread 2', m.processes[2].threads[2].name);
+}
+
+tests.testParsingWhenEndComesFirst = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'E'},
+    {name: 'a', args: {}, pid: 1, ts: 4, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'a', args: {}, pid: 1, ts: 5, cat: 'foo', tid: 1, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events, false);
+  var p = m.processes[1];
+  var t = p.threads[1];
+  assertEquals(1, t.slices.length);
+  assertEquals('a', t.slices[0].title);
+  assertEquals(0.004, t.slices[0].start);
+  assertEquals(0.001, t.slices[0].duration);
+  assertEquals(1, m.importErrors.length);
+}
+
+tests.testImmediateParsing = function() {
+  var events = [
+    // Need to include immediates inside a task so the timeline
+    // recentering/zeroing doesn't clobber their timestamp.
+    {name: 'a', args: {}, pid: 1, ts: 1, cat: 'foo', tid: 1, ph: 'B'},
+    {name: 'immediate', args: {}, pid: 1, ts: 2, cat: 'foo', tid: 1, ph: 'I'},
+    {name: 'a', args: {}, pid: 1, ts: 4, cat: 'foo', tid: 1, ph: 'E'}
+  ];
+  var m = new tracing.TimelineModel(events, false);
+  var p = m.processes[1];
+  var t = p.threads[1];
+  assertEquals(2, t.slices.length);
+  assertEquals(0.002, t.slices[0].start);
+  assertEquals(0, t.slices[0].duration);
+  assertEquals(0.001, t.slices[1].start);
+  assertEquals(0.003, t.slices[1].duration);
+
+  assertEquals(2, t.subRows.length);
+  var subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertEquals(0.003, slice.duration);
+  assertEquals(1, slice.subSlices.length);
+
+  var immed = slice.subSlices[0];
+  assertEquals('immediate', immed.title);
+  assertEquals(0.002, immed.start);
+  assertEquals(0, immed.duration);
+  assertEquals(0, immed.subSlices.length);
+
+  subRow = t.subRows[1];
+  assertEquals(immed, subRow[0]);
+}
+
+tests.testSimpleCounter = function() {
+  var events = [
+    {name: 'ctr', args: {'value': 0}, pid: 1, ts: 0, cat: 'foo', tid: 1,
+     ph: 'C'},
+    {name: 'ctr', args: {'value': 10}, pid: 1, ts: 10, cat: 'foo', tid: 1,
+     ph: 'C'},
+    {name: 'ctr', args: {'value': 0}, pid: 1, ts: 20, cat: 'foo', tid: 1,
+     ph: 'C'}
+
+  ];
+  var m = new tracing.TimelineModel(events);
+  var p = m.processes[1];
+  var ctr = m.processes[1].counters['foo.ctr'];
+
+  assertEquals('ctr', ctr.name);
+  assertEquals(3, ctr.numSamples);
+  assertEquals(1, ctr.numSeries);
+
+  assertArrayEquals(['value'], ctr.seriesNames);
+  assertArrayEquals([tracing.getStringColorId('ctr.value')], ctr.seriesColors);
+  assertArrayEquals([0, 0.01, 0.02], ctr.timestamps);
+  assertArrayEquals([0, 10, 0], ctr.samples);
+  assertArrayEquals([0, 10, 0], ctr.totals);
+  assertEquals(10, ctr.maxTotal);
+}
+
+tests.testInstanceCounter = function() {
+  var events = [
+    {name: 'ctr', args: {'value': 0}, pid: 1, ts: 0, cat: 'foo', tid: 1,
+     ph: 'C', id: 0},
+    {name: 'ctr', args: {'value': 10}, pid: 1, ts: 10, cat: 'foo', tid: 1,
+     ph: 'C', id: 0},
+    {name: 'ctr', args: {'value': 10}, pid: 1, ts: 10, cat: 'foo', tid: 1,
+     ph: 'C', id: 1},
+    {name: 'ctr', args: {'value': 20}, pid: 1, ts: 15, cat: 'foo', tid: 1,
+     ph: 'C', id: 1},
+    {name: 'ctr', args: {'value': 30}, pid: 1, ts: 18, cat: 'foo', tid: 1,
+     ph: 'C', id: 1}
+  ];
+  var m = new tracing.TimelineModel(events);
+  var p = m.processes[1];
+  var ctr = m.processes[1].counters['foo.ctr[0]'];
+  assertEquals('ctr[0]', ctr.name);
+  assertEquals(2, ctr.numSamples);
+  assertEquals(1, ctr.numSeries);
+  assertArrayEquals([0, 0.01], ctr.timestamps);
+  assertArrayEquals([0, 10], ctr.samples);
+
+  var ctr = m.processes[1].counters['foo.ctr[1]'];
+  assertEquals('ctr[1]', ctr.name);
+  assertEquals(3, ctr.numSamples);
+  assertEquals(1, ctr.numSeries);
+  assertArrayEquals([0.01, 0.015, 0.018], ctr.timestamps);
+  assertArrayEquals([10, 20, 30], ctr.samples);
+}
+
+tests.testMultiCounterUpdateBounds = function() {
+  var ctr = new tracing.TimelineCounter(undefined, 'testBasicCounter',
+      'testBasicCounter');
+  ctr.seriesNames = ['value1', 'value2'];
+  ctr.seriesColors = ['testBasicCounter.value1', 'testBasicCounter.value2'];
+  ctr.timestamps = [0, 1, 2, 3, 4, 5, 6, 7];
+  ctr.samples = [0, 0,
+                 1, 0,
+                 1, 1,
+                 2, 1.1,
+                 3, 0,
+                 1, 7,
+                 3, 0,
+                 3.1, 0.5];
+  ctr.updateBounds();
+  assertEquals(0, ctr.minTimestamp);
+  assertEquals(7, ctr.maxTimestamp);
+  assertEquals(8, ctr.maxTotal);
+  assertArrayEquals([0, 0,
+                     1, 1,
+                     1, 2,
+                     2, 3.1,
+                     3, 3,
+                     1, 8,
+                     3, 3,
+                     3.1, 3.6], ctr.totals);
+}
+
+tests.testMultiCounter = function() {
+  var events = [
+    {name: 'ctr', args: {'value1': 0, 'value2': 7}, pid: 1, ts: 0, cat: 'foo',
+     tid: 1, ph: 'C'},
+    {name: 'ctr', args: {'value1': 10, 'value2': 4}, pid: 1, ts: 10, cat: 'foo',
+     tid: 1, ph: 'C'},
+    {name: 'ctr', args: {'value1': 0, 'value2': 1 }, pid: 1, ts: 20, cat: 'foo',
+     tid: 1, ph: 'C'}
+  ];
+  var m = new tracing.TimelineModel(events);
+  var p = m.processes[1];
+  var ctr = m.processes[1].counters['foo.ctr'];
+  assertEquals('ctr', ctr.name);
+
+  assertEquals('ctr', ctr.name);
+  assertEquals(3, ctr.numSamples);
+  assertEquals(2, ctr.numSeries);
+
+  assertArrayEquals(['value1', 'value2'], ctr.seriesNames);
+  assertArrayEquals([tracing.getStringColorId('ctr.value1'),
+                     tracing.getStringColorId('ctr.value2')],
+                    ctr.seriesColors);
+  assertArrayEquals([0, 0.01, 0.02], ctr.timestamps);
+  assertArrayEquals([0, 7,
+                     10, 4,
+                     0, 1], ctr.samples);
+  assertArrayEquals([0, 7,
+                     10, 14,
+                     0, 1], ctr.totals);
+  assertEquals(14, ctr.maxTotal);
+}
+
+tests.testImportObjectInsteadOfArray = function() {
+  var events = { traceEvents: [
+    {name: 'a', args: {}, pid: 52, ts: 524, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'}
+  ] };
+
+  var m = new tracing.TimelineModel(events);
+  assertEquals(1, m.numProcesses);
+}
+
+tests.testImportString = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 52, ts: 524, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'}
+  ];
+
+  var m = new tracing.TimelineModel(JSON.stringify(events));
+  assertEquals(1, m.numProcesses);
+}
+
+tests.testImportStringWithTrailingNewLine = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 52, ts: 524, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'}
+  ];
+
+  var m = new tracing.TimelineModel(JSON.stringify(events) + '\n');
+  assertEquals(1, m.numProcesses);
+}
+
+tests.testImportStringWithMissingCloseSquareBracket = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 52, ts: 524, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'}
+  ];
+
+  var tmp = JSON.stringify(events);
+  assertEquals(']', tmp[tmp.length - 1]);
+
+  // Drop off the trailing ]
+  var dropped = tmp.substring(0, tmp.length - 1);
+  var m = new tracing.TimelineModel(dropped);
+  assertEquals(1, m.numProcesses);
+}
+
+tests.testImportStringWithMissingCloseSquareBracketAndNewline = function() {
+  var events = [
+    {name: 'a', args: {}, pid: 52, ts: 524, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'}
+  ];
+
+  var tmp = JSON.stringify(events);
+  assertEquals(']', tmp[tmp.length - 1]);
+
+  // Drop off the trailing ] and add a newline
+  var dropped = tmp.substring(0, tmp.length - 1);
+  var m = new tracing.TimelineModel(dropped + '\n');
+  assertEquals(1, m.numProcesses);
+}
+
+tests.testStartFinishOneSliceOneThread = function() {
+  var events = [
+    // Time is intentionally out of order.
+    {name: 'a', args: {}, pid: 52, ts: 560, cat: 'foo', tid: 53,
+       ph: 'F', id: 72},
+    {name: 'a', pid: 52, ts: 524, cat: 'foo', tid: 53,
+       ph: 'S', id: 72, args: {'foo': 'bar'}}
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[52].threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.asyncSlices.slices.length);
+  assertEquals('a', t.asyncSlices.slices[0].title);
+  assertEquals(72, t.asyncSlices.slices[0].id);
+  assertEquals('bar', t.asyncSlices.slices[0].args.foo);
+  assertEquals(0, t.asyncSlices.slices[0].start);
+  assertAlmostEquals((60 - 24) / 1000, t.asyncSlices.slices[0].duration);
+  assertEquals(t, t.asyncSlices.slices[0].startThread);
+  assertEquals(t, t.asyncSlices.slices[0].endThread);
+}
+
+tests.testEndArgsAddedToSlice = function() {
+  var events = [
+    {name: 'a', args: {x: 1}, pid: 52, ts: 520, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'a', args: {y: 2}, pid: 52, ts: 560, cat: 'foo', tid: 53, ph: 'E'},
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  assertEquals(1, m.numProcesses);
+  var p = m.processes[52];
+  assertNotUndefined(p);
+
+  assertEquals(1, p.numThreads);
+  var t = p.threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(53, t.tid);
+  var subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  var slice = subRow[0];
+  assertEquals('a', slice.title);
+  assertEquals(0, slice.start);
+  assertEquals(0, slice.subSlices.length);
+  assertEquals(1, slice.args['x']);
+  assertEquals(2, slice.args['y']);
+}
+
+tests.testEndArgOverrwritesOriginalArgValueIfDuplicated = function() {
+  var events = [
+    {name: 'b', args: {z: 3}, pid: 52, ts: 629, cat: 'foo', tid: 53, ph: 'B'},
+    {name: 'b', args: {z: 4}, pid: 52, ts: 631, cat: 'foo', tid: 53, ph: 'E'}
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  assertEquals(1, m.numProcesses);
+  var p = m.processes[52];
+  assertNotUndefined(p);
+
+  assertEquals(1, p.numThreads);
+  var t = p.threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.subRows.length);
+  assertEquals(53, t.tid);
+  var subRow = t.subRows[0];
+  assertEquals(1, subRow.length);
+  var slice = subRow[0];
+  assertEquals('b', slice.title);
+  assertEquals(0, slice.start);
+  assertEquals(0, slice.subSlices.length);
+  assertEquals(4, slice.args['z']);
+}
+
+tests.testAsyncEndArgsAddedToSlice = function() {
+  var events = [
+    // Time is intentionally out of order.
+    {name: 'c', args: {y: 2}, pid: 52, ts: 560, cat: 'foo', tid: 53,
+       ph: 'F', id: 72},
+    {name: 'c', args: {x: 1}, pid: 52, ts: 524, cat: 'foo', tid: 53,
+       ph: 'S', id: 72}
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[52].threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.asyncSlices.slices.length);
+  var parentSlice = t.asyncSlices.slices[0];
+  assertEquals('c', parentSlice.title);
+
+  assertNotUndefined(parentSlice.subSlices);
+  assertEquals(1, parentSlice.subSlices.length);
+  var subSlice = parentSlice.subSlices[0];
+  assertEquals(1, subSlice.args['x']);
+  assertEquals(2, subSlice.args['y']);
+}
+
+tests.testAsyncEndArgOverrwritesOriginalArgValueIfDuplicated = function() {
+  var events = [
+    // Time is intentionally out of order.
+    {name: 'd', args: {z: 4}, pid: 52, ts: 560, cat: 'foo', tid: 53,
+       ph: 'F', id: 72},
+    {name: 'd', args: {z: 3}, pid: 52, ts: 524, cat: 'foo', tid: 53,
+       ph: 'S', id: 72}
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[52].threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.asyncSlices.slices.length);
+  var parentSlice = t.asyncSlices.slices[0];
+  assertEquals('d', parentSlice.title);
+
+  assertNotUndefined(parentSlice.subSlices);
+  assertEquals(1, parentSlice.subSlices.length);
+  var subSlice = parentSlice.subSlices[0];
+  assertEquals(4, subSlice.args['z']);
+}
+
+tests.testAsyncStepsInOneThread = function() {
+  var events = [
+    // Time is intentionally out of order.
+    {name: 'a', args: {z: 3}, pid: 52, ts: 560, cat: 'foo', tid: 53,
+       ph: 'F', id: 72},
+    {name: 'a', args: {step: 's1', y: 2}, pid: 52, ts: 548, cat: 'foo', tid: 53,
+       ph: 'T', id: 72, },
+    {name: 'a', args: {x: 1}, pid: 52, ts: 524, cat: 'foo', tid: 53,
+       ph: 'S', id: 72}
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[52].threads[53];
+  assertNotUndefined(t);
+  assertEquals(1, t.asyncSlices.slices.length);
+  var parentSlice = t.asyncSlices.slices[0];
+  assertEquals('a', parentSlice.title);
+  assertEquals(0, parentSlice.start);
+
+  assertNotUndefined(parentSlice.subSlices);
+  assertEquals(2, parentSlice.subSlices.length);
+  var subSlice = parentSlice.subSlices[0];
+  assertEquals('a', subSlice.title);
+  assertEquals(0, subSlice.start);
+  assertAlmostEquals((548 - 524) / 1000, subSlice.duration);
+  assertEquals(1, subSlice.args['x']);
+
+  var subSlice = parentSlice.subSlices[1];
+  assertEquals('a:s1', subSlice.title);
+  assertAlmostEquals((548 - 524) / 1000, subSlice.start);
+  assertAlmostEquals((560 - 548) / 1000, subSlice.duration);
+  assertEquals(2, subSlice.args['y']);
+  assertEquals(3, subSlice.args['z']);
+}
+
+tests.testAsyncStepsMissingStart = function() {
+  var events = [
+    // Time is intentionally out of order.
+    {name: 'a', args: {z: 3}, pid: 52, ts: 560, cat: 'foo', tid: 53,
+       ph: 'F', id: 72},
+    {name: 'a', args: {step: 's1', y: 2}, pid: 52, ts: 548, cat: 'foo', tid: 53,
+       ph: 'T', id: 72, },
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[52].threads[53];
+  assertUndefined(t);
+}
+
+tests.testAsyncStepsMissingFinish = function() {
+  var events = [
+    // Time is intentionally out of order.
+    {name: 'a', args: {step: 's1', y: 2}, pid: 52, ts: 548, cat: 'foo', tid: 53,
+       ph: 'T', id: 72, },
+    {name: 'a', args: {z: 3}, pid: 52, ts: 560, cat: 'foo', tid: 53,
+       ph: 'S', id: 72},
+  ];
+
+  var m = new tracing.TimelineModel(events);
+  var t = m.processes[52].threads[53];
+  assertUndefined(t);
+}
+
+// TODO(nduca): one slice, two threads
+// TODO(nduca): one slice, two pids
+
+return tests;
+});
+</script>
+</body>
+</html>

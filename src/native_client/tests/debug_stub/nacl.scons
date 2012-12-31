@@ -1,0 +1,129 @@
+# -*- python -*-
+# Copyright 2012 The Native Client Authors.  All rights reserved.
+# Use of this source code is governed by a BSD-style license that can
+# be found in the LICENSE file.
+
+Import('env')
+
+if 'TRUSTED_ENV' not in env:
+  Return()
+trusted_env = env['TRUSTED_ENV']
+
+if env.Bit('bitcode'):
+  # We use inline assembly, which does not work in pexes.
+  if env.Bit('pnacl_generate_pexe'):
+    Return()
+  env.AddBiasForPNaCl()
+  env.PNaClForceNative()
+
+test_prog = env.ComponentProgram('debugger_test', 'debugger_test.c',
+                                 EXTRA_LIBS=['${NONIRT_LIBS}'])
+
+sel_ldr_command = env.AddBootstrap(env.GetSelLdr(), ['-f', test_prog])
+
+is_broken = (not env.Bit('nacl_static_link')
+             or env.Bit('asan')
+             or (env.Bit('host_windows') and env.Bit('build_x86_32')))
+extra_test_args = []
+if env.Bit('host_mac'):
+  # Resuming from a breakpoint does not yet work on Mac, so we run
+  # just the single test that works.
+  extra_test_args.append('DebugStubTest.test_initial_breakpoint')
+  # "-a" has the side effect of disabling the Mac outer sandbox, which
+  # does not yet work with the debug stub because the debug stub does
+  # bind() after the outer sandbox has been enabled.
+  # TODO(mseaborn): Clean up the debug stub's initialisation so that
+  # this workaround is not needed.
+  sel_ldr_command.append('-a')
+
+node = env.CommandTest(
+    'debug_stub_test.out',
+    command=(['${PYTHON}', env.File('debug_stub_test.py'), '-v']
+             + extra_test_args
+             + ['--', env.get('TARGET_FULLARCH')] + sel_ldr_command))
+# This test is in "large_tests" because it binds a fixed TCP port and
+# so will not coexist gracefully with other instances of the same test
+# or other processes that dynamically allocate TCP ports.
+# TODO(mseaborn): Eliminate the TCP port binding by using a socketpair
+# instead and move this into small_tests + pexe_tests.  Adding this to
+# nonpexe_tests (which uses -j currently) will enable this test for
+# ARM.
+env.AddNodeToTestSuite(node, ['large_tests'], 'run_debug_stub_test',
+                       is_broken=is_broken)
+
+
+# Test debug_stub in Chrome -- currently this ONLY works on Windows
+#is_broken = not env.Bit('host_windows')
+
+# browser_debug disabled:
+# http://code.google.com/p/nativeclient/issues/detail?id=1956
+# TODO(elijahtaylor) This test can't run on our bots if we don't register
+# the plugin we just built.  Depends on:
+# http://code.google.com/p/chromium/issues/detail?id=85070
+# http://code.google.com/p/nativeclient/issues/detail?id=1917
+is_broken = True
+
+# Build .nexe to be used with debug_in_browswer test
+browser_test_target = env.ProgramNameForNmf('debug_browser_test')
+browser_test_nexe = env.ComponentProgram(browser_test_target,
+                                         ['debug_browser_test.cc'],
+                                         EXTRA_LIBS=['${PPAPI_LIBS}',
+                                                      'ppapi_cpp']
+                                         )
+
+# Note that the html and a .nmf manifest is required to run this program.
+dest_copy = env.Replicate('$STAGING_DIR',
+                          ['debug_browser.html',
+                           'debug_browser_test.nmf'])
+
+
+env.Depends(browser_test_target, dest_copy)
+test_files = [
+    browser_test_nexe,
+    env.File('$STAGING_DIR/nacltest.js'),
+    env.File('$STAGING_DIR/debug_browser_test.nmf'),
+    env.File('$STAGING_DIR/debug_browser.html'),
+    ]
+
+# For now, we have to force this test to always run using chrome's
+# built-in NaCl and not with --register-pepper-plugins because
+# --enable-nacl-debug does not work with --register-pepper-plugins.
+# See: http://code.google.com/p/chromium/issues/detail?id=85070
+# TODO(mmortensen) remove the debug_env lines below when issue 85070
+# is resolved and a new-enough chrome gets DEPS'd in.
+#
+# TODO(mmortensen) Get this test (along with other PyAuto tests) running
+# on the NaCl chrome integration bots.
+# See: http://code.google.com/p/nativeclient/issues/detail?id=1917
+debug_env = env.Clone()
+debug_env.SetBits('disable_dynamic_plugin_loading')
+
+node = debug_env.PyAutoTester(
+    'browser_debug.out',
+    env.File('debug_stub_chrome_test.py'),
+    extra_chrome_flags=['--enable-nacl-debug','--no-sandbox'],
+    files=test_files
+)
+
+# TODO(mmortensen) This test appears to be flakey. Please check/fix
+# and re-enable.
+env.AddNodeToTestSuite(node,
+                       ['pyauto_tests'],
+                       'run_pyauto_browser_debug_test',
+                       is_broken=env.PyAutoTesterIsBroken() or is_broken)
+
+# This test will fail until we fix chrome issue
+# http://code.google.com/p/chromium/issues/detail?id=85070
+node = env.PyAutoTester(
+    'browser_debug_broken.out',
+    env.File('debug_stub_chrome_test.py'),
+    extra_chrome_flags=['--enable-nacl-debug','--no-sandbox'],
+    files=test_files
+)
+
+# TODO(mmortensen) Enable this test once chrome --enable-nacl-debug
+# works with --register-pepper-plugins.
+env.AddNodeToTestSuite(node,
+                       ['pyauto_tests'],
+                       'run_pyauto_browser_debug_test_broken',
+                       is_broken=True)
