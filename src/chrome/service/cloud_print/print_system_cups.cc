@@ -5,6 +5,7 @@
 #include "chrome/service/cloud_print/print_system.h"
 
 #include <cups/cups.h>
+#include <cups/ppd.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <pthread.h>
