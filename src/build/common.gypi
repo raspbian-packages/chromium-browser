@@ -1477,6 +1477,7 @@
       ['enable_gpu==1', {
         'defines': [
           'ENABLE_GPU=1',
+          'GLEW_MX',
         ],
       }],
       ['use_openssl==1', {

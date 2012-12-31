@@ -497,6 +497,23 @@
       },
     },
     {
+      'target_name': 'glew',
+      'type': 'none',
+      'conditions': [
+        ['_toolset=="target"', {
+          'link_settings': {
+            'ldflags': [
+              '<!@(pkg-config --libs-only-L --libs-only-other glewmx)',
+            ],
+            'libraries': [
+              '<!@(<(pkg-config) --libs-only-l glewmx)',
+              '-lGL',
+              '-lX11',
+            ],
+          },
+      }]]
+    },
+    {
       # TODO(satorux): Remove this once dbus-glib clients are gone.
       'target_name': 'dbus-glib',
       'type': 'none',
