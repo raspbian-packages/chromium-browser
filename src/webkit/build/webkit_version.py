@@ -61,6 +61,15 @@ def GetWebKitRevision(webkit_dir, version_file):
       default_lastchange=None,
       directory=os.path.join(webkit_dir, version_file_dir),
       directory_regex_prior_to_src_url='webkit')
+  if version_info.url is None or version_info.url == 'unknown':
+    # parse the DEPS file
+    data = open("../../DEPS", "rb").read()
+    x = re.search(r'"webkit_revision": "(\d+)",', data)
+    rev = x.group(1) if x else "n-a"
+    x = re.search(r'"webkit_trunk": "(.*?)",', data)
+    branch = os.path.basename(x.group(1)) if x else "n-a"
+    return "%s@%s" % (branch, rev)
+
 
   if version_info.url == None:
     version_info.url = 'Unknown URL'
