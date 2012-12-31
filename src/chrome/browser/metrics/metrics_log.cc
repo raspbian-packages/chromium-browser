@@ -16,7 +16,7 @@
 #include "base/string_number_conversions.h"
 #include "base/string_util.h"
 #include "base/sys_info.h"
-#include "base/third_party/nspr/prtime.h"
+#include <nspr/prtime.h>
 #include "base/time.h"
 #include "base/tracked_objects.h"
 #include "base/utf_string_conversions.h"
