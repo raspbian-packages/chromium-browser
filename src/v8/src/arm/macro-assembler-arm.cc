@@ -61,9 +61,9 @@ MacroAssembler::MacroAssembler(Isolate* arg_isolate, void* buffer, int size)
 // We do not support thumb inter-working with an arm architecture not supporting
 // the blx instruction (below v5t).  If you know what CPU you are compiling for
 // you can use -march=armv7 or similar.
-#if defined(USE_THUMB_INTERWORK) && !defined(CAN_USE_THUMB_INSTRUCTIONS)
-# error "For thumb inter-working we require an architecture which supports blx"
-#endif
+//#if defined(USE_THUMB_INTERWORK) && !defined(CAN_USE_THUMB_INSTRUCTIONS)
+//# error "For thumb inter-working we require an architecture which supports blx"
+//#endif
 
 
 // Using bx does not yield better code, so use it only when required

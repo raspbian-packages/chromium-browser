@@ -1285,9 +1285,11 @@
         [ 'target_arch == "arm" and armv7 != 1', {
           'sources': [
             '../third_party/skia/src/opts/SkBlitRow_opts_none.cpp',
+            '../third_party/skia/src/opts/SkUtils_opts_none.cpp',
           ],
           'sources!': [
             '../third_party/skia/src/opts/SkBlitRow_opts_arm.cpp',
+            '../third_party/skia/src/opts/opts_check_arm.cpp',
           ],
         }],
       ],
