@@ -35,8 +35,10 @@
 #endif
 
 #if   HAVE_NEON
+        #error raspbian builds should not be using NEON, build system problems indicated
         .arch           armv7-a
 #elif HAVE_ARMV6T2
+        #error raspbian builds should not be using ARMV6T2, build system problems indicated
         .arch           armv6t2
 #elif HAVE_ARMV6
         .arch           armv6
@@ -45,6 +47,7 @@
 #endif
 
 #if   HAVE_NEON
+        #error raspbian builds should not be using this option, build system problems indicated
         .fpu            neon
 #elif HAVE_ARMVFP
         .fpu            vfp

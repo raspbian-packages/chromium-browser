@@ -306,15 +306,15 @@ if [ "$TARGET_OS" = "linux" ]; then
     # much smaller than optimized arm builds, hence we go with the global
     # CrOS settings.
     add_flag_common --enable-armv6
-    add_flag_common --enable-armv6t2
+    add_flag_common --disable-armv6t2
     add_flag_common --enable-armvfp
-    add_flag_common --enable-thumb
+    add_flag_common --disable-thumb
     add_flag_common --disable-neon
-    add_flag_common --extra-cflags=-march=armv7-a
-    add_flag_common --extra-cflags=-mtune=cortex-a8
-    add_flag_common --extra-cflags=-mfpu=vfpv3-d16
+    add_flag_common --extra-cflags=-march=armv6
+    #add_flag_common --extra-cflags=-mtune=cortex-a8
+    add_flag_common --extra-cflags=-mfpu=vfpv2
     # NOTE: softfp/hardfp selected at gyp time.
-    add_flag_common --extra-cflags=-mfloat-abi=softfp
+    add_flag_common --extra-cflags=-mfloat-abi=hard
   elif [ "$TARGET_ARCH" = "arm-neon" ]; then
     # This if-statement is for chroot arm-generic.
     add_flag_common --enable-cross-compile

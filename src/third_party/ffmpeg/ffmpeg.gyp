@@ -170,22 +170,23 @@
               # TODO(ihf): See the long comment in build_ffmpeg.sh
               # We want to be consistent with CrOS and have configured
               # ffmpeg for thumb. Protect yourself from -marm.
-              'cflags!': [
-                '-marm',
-              ],
-              'cflags': [
-                '-mthumb',
-                '-march=armv7-a',
-                '-mtune=cortex-a8',
-              ],
+              #'cflags!': [
+              #  '-marm',
+              #],
+              #'cflags': [
+              #  '-mthumb',
+              #  '-march=armv7-a',
+              #  '-mtune=cortex-a8',
+              #],
               'conditions': [
                 ['arm_neon == 0', {
-                  'cflags': [
-                    '-mfpu=vfpv3-d16',
-                  ],
+                  #'cflags': [
+                  #  '-mfpu=vfpv3-d16',
+                  #],
                 }, {
                   'cflags': [
-                    '-mfpu=neon',
+                    #deliberate error
+                    '-mfpu=neon_is_not_appropriate_for_raspbian',
                   ],
                 }],
                 ['arm_float_abi == "hard"', {
