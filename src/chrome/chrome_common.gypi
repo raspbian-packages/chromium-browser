@@ -309,6 +309,11 @@
             '<(DEPTH)/third_party/wtl/include',
           ]
         }],
+        ['OS=="linux"', {
+          'include_dirs': [
+            '/usr/include/nspr',
+          ],
+        }],
         ['toolkit_uses_gtk == 1', {
           'dependencies': [
             '../build/linux/system.gyp:gtk',
