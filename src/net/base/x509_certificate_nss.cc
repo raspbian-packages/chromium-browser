@@ -9,7 +9,7 @@
 #include <keyhi.h>
 #include <nss.h>
 #include <pk11pub.h>
-#include <prtime.h>
+#include <nspr/prtime.h>
 #include <secder.h>
 #include <sechash.h>
 

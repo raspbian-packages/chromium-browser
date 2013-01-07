@@ -17,7 +17,6 @@
           'third_party/dmg_fp/dtoa_wrapper.cc',
           'third_party/icu/icu_utf.cc',
           'third_party/icu/icu_utf.h',
-          'third_party/nspr/prtime.cc',
           'third_party/nspr/prtime.h',
           'third_party/nspr/prcpucfg_linux.h',
           'third_party/xdg_mime/xdgmime.h',

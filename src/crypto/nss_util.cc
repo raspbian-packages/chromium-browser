@@ -9,7 +9,7 @@
 #include <plarena.h>
 #include <prerror.h>
 #include <prinit.h>
-#include <prtime.h>
+#include <nspr/prtime.h>
 #include <pk11pub.h>
 #include <secmod.h>
 
