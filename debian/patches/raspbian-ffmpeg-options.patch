@@ -1,0 +1,135 @@
+Description: Set ffmpeg options for raspbian
+   * Fix build settings for embedded ffmpeg (hopefully)
+Author: Peter Michael Green <plugwash@raspbian.org>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+Index: chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/chromium/scripts/build_ffmpeg.sh
+===================================================================
+--- chromium-browser-22.0.1229.94~r161065.orig/src/third_party/ffmpeg/chromium/scripts/build_ffmpeg.sh	2012-11-12 19:18:30.000000000 +0000
++++ chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/chromium/scripts/build_ffmpeg.sh	2012-11-12 19:55:52.000000000 +0000
+@@ -306,15 +306,15 @@
+     # much smaller than optimized arm builds, hence we go with the global
+     # CrOS settings.
+     add_flag_common --enable-armv6
+-    add_flag_common --enable-armv6t2
++    add_flag_common --disable-armv6t2
+     add_flag_common --enable-armvfp
+-    add_flag_common --enable-thumb
++    add_flag_common --disable-thumb
+     add_flag_common --disable-neon
+-    add_flag_common --extra-cflags=-march=armv7-a
+-    add_flag_common --extra-cflags=-mtune=cortex-a8
+-    add_flag_common --extra-cflags=-mfpu=vfpv3-d16
++    add_flag_common --extra-cflags=-march=armv6
++    #add_flag_common --extra-cflags=-mtune=cortex-a8
++    add_flag_common --extra-cflags=-mfpu=vfpv2
+     # NOTE: softfp/hardfp selected at gyp time.
+-    add_flag_common --extra-cflags=-mfloat-abi=softfp
++    add_flag_common --extra-cflags=-mfloat-abi=hard
+   elif [ "$TARGET_ARCH" = "arm-neon" ]; then
+     # This if-statement is for chroot arm-generic.
+     add_flag_common --enable-cross-compile
+Index: chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/libavutil/arm/asm.S
+===================================================================
+--- chromium-browser-22.0.1229.94~r161065.orig/src/third_party/ffmpeg/libavutil/arm/asm.S	2012-11-12 19:18:30.000000000 +0000
++++ chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/libavutil/arm/asm.S	2012-11-13 13:16:01.000000000 +0000
+@@ -35,8 +35,10 @@
+ #endif
+ 
+ #if   HAVE_NEON
++        #error raspbian builds should not be using NEON, build system problems indicated
+         .arch           armv7-a
+ #elif HAVE_ARMV6T2
++        #error raspbian builds should not be using ARMV6T2, build system problems indicated
+         .arch           armv6t2
+ #elif HAVE_ARMV6
+         .arch           armv6
+@@ -45,6 +47,7 @@
+ #endif
+ 
+ #if   HAVE_NEON
++        #error raspbian builds should not be using this option, build system problems indicated
+         .fpu            neon
+ #elif HAVE_ARMVFP
+         .fpu            vfp
+Index: chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/ffmpeg.gyp
+===================================================================
+--- chromium-browser-22.0.1229.94~r161065.orig/src/third_party/ffmpeg/ffmpeg.gyp	2012-11-12 19:55:00.000000000 +0000
++++ chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/ffmpeg.gyp	2012-11-12 19:55:52.000000000 +0000
+@@ -170,22 +170,23 @@
+               # TODO(ihf): See the long comment in build_ffmpeg.sh
+               # We want to be consistent with CrOS and have configured
+               # ffmpeg for thumb. Protect yourself from -marm.
+-              'cflags!': [
+-                '-marm',
+-              ],
+-              'cflags': [
+-                '-mthumb',
+-                '-march=armv7-a',
+-                '-mtune=cortex-a8',
+-              ],
++              #'cflags!': [
++              #  '-marm',
++              #],
++              #'cflags': [
++              #  '-mthumb',
++              #  '-march=armv7-a',
++              #  '-mtune=cortex-a8',
++              #],
+               'conditions': [
+                 ['arm_neon == 0', {
+-                  'cflags': [
+-                    '-mfpu=vfpv3-d16',
+-                  ],
++                  #'cflags': [
++                  #  '-mfpu=vfpv3-d16',
++                  #],
+                 }, {
+                   'cflags': [
+-                    '-mfpu=neon',
++                    #deliberate error
++                    '-mfpu=neon_is_not_appropriate_for_raspbian',
+                   ],
+                 }],
+                 ['arm_float_abi == "hard"', {
+Index: chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/chromium/config/Chrome/linux/arm/config.h
+===================================================================
+--- chromium-browser-22.0.1229.94~r161065.orig/src/third_party/ffmpeg/chromium/config/Chrome/linux/arm/config.h	2012-11-13 13:15:49.000000000 +0000
++++ chromium-browser-22.0.1229.94~r161065/src/third_party/ffmpeg/chromium/config/Chrome/linux/arm/config.h	2012-11-13 13:16:01.000000000 +0000
+@@ -1,4 +1,6 @@
+ /* Automatically generated by configure - do not modify! */
++/* Upstream comment claims this is automatically generated by configure, however the file date implied otherwise, so i'm
++   going to edit it anyway --plugwash */
+ #ifndef FFMPEG_CONFIG_H
+ #define FFMPEG_CONFIG_H
+ #define FFMPEG_CONFIGURATION "--disable-everything --disable-avdevice --disable-avfilter --disable-bzlib --disable-doc --disable-network --disable-postproc --disable-swresample --disable-swscale --disable-zlib --enable-fft --enable-rdft --enable-shared --disable-dxva2 --disable-vaapi --disable-vda --disable-vdpau --optflags=-O2 --enable-decoder='theora,vorbis,vp8' --enable-decoder='pcm_u8,pcm_s16le,pcm_s24le,pcm_f32le' --enable-decoder='pcm_s16be,pcm_s24be' --enable-demuxer='ogg,matroska,wav' --enable-parser='vp3,vorbis,vp8' --enable-cross-compile --cross-prefix=/usr/bin/armv7a-cros-linux-gnueabi- --target-os=linux --arch=arm --enable-armv6 --enable-armv6t2 --enable-armvfp --enable-thumb --disable-neon --extra-cflags='-march=armv7-a' --extra-cflags='-mtune=cortex-a8' --extra-cflags='-mfpu=vfpv3-d16' --extra-cflags='-mfloat-abi=softfp' --enable-pic --enable-decoder='aac,h264,mp3' --enable-demuxer='mp3,mov' --enable-parser='aac,h264,mpegaudio'"
+@@ -36,7 +38,7 @@
+ #define HAVE_AMD3DNOWEXT 0
+ #define HAVE_ARMV5TE 1
+ #define HAVE_ARMV6 1
+-#define HAVE_ARMV6T2 1
++#define HAVE_ARMV6T2 0
+ #define HAVE_ARMVFP 1
+ #define HAVE_AVX 0
+ #define HAVE_MMI 0
+@@ -290,7 +292,7 @@
+ #define CONFIG_SWRESAMPLE 0
+ #define CONFIG_SWSCALE 0
+ #define CONFIG_SWSCALE_ALPHA 1
+-#define CONFIG_THUMB 1
++#define CONFIG_THUMB 0
+ #define CONFIG_VAAPI 0
+ #define CONFIG_VDA 0
+ #define CONFIG_VDPAU 0
