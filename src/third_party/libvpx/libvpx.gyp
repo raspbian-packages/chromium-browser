@@ -3,6 +3,11 @@
 # found in the LICENSE file.
 {
   'variables': {
+   'use_system_vpx%': 0,
+   },
+   'conditions': [
+   ['use_system_vpx==0',{
+    'variables':{
     'conditions': [
       ['os_posix==1', {
         'asm_obj_extension': 'o',
@@ -458,6 +463,31 @@
       ]
     },
   ],
+  },{ # use_system_vpx==1
+    'targets': [
+      {
+        'target_name':'libvpx',
+        'type':'none',
+        'direct_dependent_settings': {
+          'cflags': [
+          '<!@(pkg-config --cflags vpx)',
+        ],
+        'defines': [
+          'USE_SYSTEM_VPX',
+        ],
+      },
+      'link_settings': {
+        'ldflags': [
+          '<!@(pkg-config --libs-only-L --libs-only-other vpx)',
+        ],
+        'libraries': [
+          '<!@(pkg-config --libs-only-l vpx)',
+        ],
+      },
+    },
+  ],
+ }],
+ ],
 }
 
 # Local Variables:
