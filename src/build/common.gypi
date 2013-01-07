@@ -779,7 +779,7 @@
     'arm_fpu%': 'vfpv3',
 
     # Set ARM float abi compilation flag.
-    'arm_float_abi%': 'softfp',
+    #'arm_float_abi%': 'softfp',
 
     # Enable new NPDevice API.
     'enable_new_npdevice_api%': 0,
