@@ -2207,6 +2207,7 @@
                   # silences those warnings, as they are not helpful and
                   # clutter legitimate warnings.
                   '-Wno-abi',
+                  '-fno-tree-sink',
                 ],
                 'conditions': [
                   ['arm_thumb==1', {
