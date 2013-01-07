@@ -56,7 +56,7 @@ namespace {
 #if defined(GOOGLE_CHROME_BUILD)
 static const char* kIconName = "google-chrome";
 #else
-static const char* kIconName = "chromium-browser";
+static const char* kIconName = "chromium";
 #endif
 
 const char kBoldLabelMarkup[] = "<span weight='bold'>%s</span>";
