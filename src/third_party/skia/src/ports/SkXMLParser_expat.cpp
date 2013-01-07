@@ -11,7 +11,7 @@
 #include "SkString.h"
 #include "SkStream.h"
 
-#include "expat.h"
+#include <expat.h>
 
 #ifdef SK_BUILD_FOR_PPI
 #define CHAR_16_TO_9

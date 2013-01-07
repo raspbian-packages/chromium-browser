@@ -12,7 +12,7 @@
 #include "SkString.h"
 #include "SkStream.h"
 
-#include "expat.h"
+#include <expat.h>
 
 static inline char* dupstr(SkChunkAlloc& chunk, const char src[], size_t len)
 {
