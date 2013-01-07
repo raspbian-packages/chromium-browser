@@ -917,7 +917,7 @@
     }, { # OS!="android"
       'dependencies': [
         '../third_party/flac/flac.gyp:libflac',
-        '../third_party/speex/speex.gyp:libspeex',
+        '../build/linux/system.gyp:speex',
       ],
     }],
     ['OS=="mac"', {

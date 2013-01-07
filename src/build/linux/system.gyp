@@ -384,6 +384,26 @@
       ],
     },
     {
+      'target_name': 'speex',
+      'type': 'none',
+      'conditions': [
+        ['_toolset=="target"', {
+          'direct_dependent_settings': {
+            'cflags': [
+              '<!@(pkg-config --cflags speex)',
+            ],
+          },
+          'link_settings': {
+            'ldflags': [
+              '<!@(pkg-config --libs-only-L --libs-only-other speex)',
+            ],
+            'libraries': [
+              '<!@(pkg-config --libs-only-l speex)',
+            ],
+          },
+      }]]
+    },
+    {
       'target_name': 'gnome_keyring',
       'type': 'none',
       'conditions': [
