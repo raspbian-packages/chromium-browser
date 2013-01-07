@@ -247,6 +247,7 @@
         '../base/base.gyp:base',
         '../content/content.gyp:content_utility',
         '../skia/skia.gyp:skia',
+        '../build/linux/system.gyp:glew',
       ],
       'sources': [
         'utility/chrome_content_utility_client.cc',
