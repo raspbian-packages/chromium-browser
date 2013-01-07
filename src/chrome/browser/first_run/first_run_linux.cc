@@ -101,8 +101,7 @@ void AutoImport(
 FilePath MasterPrefsPath() {
   // The standard location of the master prefs is next to the chrome binary.
   FilePath master_prefs;
-  if (!PathService::Get(base::DIR_EXE, &master_prefs))
-    return FilePath();
+  master_prefs = FilePath("/etc/chromium");
   return master_prefs.AppendASCII(installer::kDefaultMasterPrefs);
 }
 
