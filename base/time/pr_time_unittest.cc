@@ -6,7 +6,7 @@
 #include <time.h>
 
 #include "base/compiler_specific.h"
-#include "base/third_party/nspr/prtime.h"
+#include <nspr/prtime.h>
 #include "base/time/time.h"
 #include "testing/gtest/include/gtest/gtest.h"
 

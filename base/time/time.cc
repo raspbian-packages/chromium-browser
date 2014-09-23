@@ -10,7 +10,8 @@
 #include "base/float_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "base/third_party/nspr/prtime.h"
+
+#include <nspr/prtime.h>
 
 namespace base {
 
