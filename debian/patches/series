@@ -1,0 +1,14 @@
+nspr.patch
+expat.patch
+prefs.patch
+system-speech.patch
+fix-manpage.patch
+cups1.5.patch
+gcc4.7.patch
+
+linker-flags.patch
+no-sse2.patch
+
+make-support/gyp.patch
+make-support/mojo.patch
+make-support/opus.patch
