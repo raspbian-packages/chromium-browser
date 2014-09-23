@@ -1,0 +1,77 @@
+--- a/chrome/browser/search_engines/template_url_prepopulate_data.h
++++ b/chrome/browser/search_engines/template_url_prepopulate_data.h
+@@ -8,6 +8,7 @@
+ #include <stddef.h>
+ #include <string>
+ #include <vector>
++#include <cstddef>
+ 
+ #include "base/memory/scoped_ptr.h"
+ #include "base/memory/scoped_vector.h"
+--- a/ipc/ipc_channel.h
++++ b/ipc/ipc_channel.h
+@@ -1,3 +1,4 @@
++#include <sys/types.h>
+ // Copyright (c) 2012 The Chromium Authors. All rights reserved.
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+--- a/third_party/ots/src/os2.cc
++++ b/third_party/ots/src/os2.cc
+@@ -5,6 +5,7 @@
+ #include "os2.h"
+ 
+ #include "head.h"
++#include <cstddef>
+ 
+ // OS/2 - OS/2 and Windows Metrics
+ // http://www.microsoft.com/opentype/otspec/os2.htm
+--- a/third_party/tcmalloc/chromium/src/base/stl_allocator.h
++++ b/third_party/tcmalloc/chromium/src/base/stl_allocator.h
+@@ -39,6 +39,7 @@
+ 
+ #include <stddef.h>   // for ptrdiff_t
+ #include <limits>
++#include <cstddef>
+ 
+ #include "base/logging.h"
+ 
+--- a/third_party/tcmalloc/chromium/src/base/vdso_support.h
++++ b/third_party/tcmalloc/chromium/src/base/vdso_support.h
+@@ -63,6 +63,7 @@
+ 
+ #define HAVE_VDSO_SUPPORT 1
+ 
++#include <cstddef>
+ #include <stdlib.h>     // for NULL
+ 
+ namespace base {
+--- a/third_party/tcmalloc/chromium/src/common.cc
++++ b/third_party/tcmalloc/chromium/src/common.cc
+@@ -33,6 +33,7 @@
+ #include "config.h"
+ #include "common.h"
+ #include "system-alloc.h"
++#include <cstddef>
+ 
+ #if defined(HAVE_UNISTD_H) && defined(HAVE_GETPAGESIZE)
+ #include <unistd.h>                     // for getpagesize
+--- a/third_party/tcmalloc/chromium/src/symbolize.h
++++ b/third_party/tcmalloc/chromium/src/symbolize.h
+@@ -39,6 +39,7 @@
+ #endif
+ #include <stddef.h>  // for NULL
+ #include <map>
++#include <cstddef>
+ 
+ using std::map;
+ 
+--- a/ui/gfx/codec/jpeg_codec.h
++++ b/ui/gfx/codec/jpeg_codec.h
+@@ -7,6 +7,7 @@
+ 
+ #include <stddef.h>
+ #include <vector>
++#include <cstddef>
+ 
+ #include "ui/gfx/gfx_export.h"
+ 

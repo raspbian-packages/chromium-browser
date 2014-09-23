@@ -1,0 +1,16 @@
+description: use system clang compilers
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/build/common.gypi	2014-09-23 19:55:14.246586282 +0000
++++ b/build/common.gypi	2014-09-23 19:55:16.610586221 +0000
+@@ -5385,8 +5385,8 @@
+     ['clang==1 and ((OS!="mac" and OS!="ios") or clang_xcode==0) '
+         'and OS!="win"', {
+       'make_global_settings': [
+-        ['CC', '<(make_clang_dir)/bin/clang'],
+-        ['CXX', '<(make_clang_dir)/bin/clang++'],
++        ['CC', '/usr/bin/clang'],
++        ['CXX', '/usr/bin/clang++'],
+         ['CC.host', '$(CC)'],
+         ['CXX.host', '$(CXX)'],
+       ],

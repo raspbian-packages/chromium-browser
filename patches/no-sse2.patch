@@ -1,0 +1,48 @@
+description: don't set sse2 compiler flags on i386
+author: Michael Gilbert <mgilbert@debian.org>
+debian-bug: http://bugs.debian.org/750361
+
+--- a/build/common.gypi
++++ b/build/common.gypi
+@@ -3538,7 +3538,7 @@
+                 # http://crbug.com/313032 for an example where this has "bit"
+                 # us in the past.
+                 'cflags': [
+-                  '-msse2',
++                  '-msse',
+                   '-mfpmath=sse',
+                   '-mmmx',  # Allows mmintrin.h for MMX intrinsics.
+                   '-m32',
+--- a/third_party/qcms/qcms.gyp
++++ b/third_party/qcms/qcms.gyp
+@@ -31,7 +31,7 @@
+       'msvs_disabled_warnings': [ 4018 ],
+ 
+       'conditions': [
+-        ['target_arch=="ia32" or target_arch=="x64"', {
++        ['target_arch=="x64"', {
+           'defines': [
+             'SSE2_ENABLE',
+           ],
+--- a/third_party/WebKit/Source/platform/audio/VectorMath.cpp
++++ b/third_party/WebKit/Source/platform/audio/VectorMath.cpp
+@@ -36,7 +36,7 @@
+ #endif
+ 
+ #if CPU(X86) || CPU(X86_64)
+-#include <emmintrin.h>
++#include <xmmintrin.h>
+ #endif
+ 
+ #if HAVE(ARM_NEON_INTRINSICS)
+--- a/third_party/WebKit/Source/platform/audio/SincResampler.cpp
++++ b/third_party/WebKit/Source/platform/audio/SincResampler.cpp
+@@ -37,7 +37,7 @@
+ #include "wtf/MathExtras.h"
+ 
+ #if CPU(X86) || CPU(X86_64)
+-#include <emmintrin.h>
++#include <xmmintrin.h>
+ #endif
+ 
+ using namespace std;
