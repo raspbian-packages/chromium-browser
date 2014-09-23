@@ -63,6 +63,7 @@
 
 #define HAVE_VDSO_SUPPORT 1
 
+#include <cstddef>
 #include <stdlib.h>     // for NULL
 
 namespace base {

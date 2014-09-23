@@ -39,6 +39,7 @@
 #endif
 #include <stddef.h>  // for NULL
 #include <map>
+#include <cstddef>
 
 using std::map;
 

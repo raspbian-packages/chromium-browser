@@ -33,6 +33,7 @@
 #include "config.h"
 #include "common.h"
 #include "system-alloc.h"
+#include <cstddef>
 
 #if defined(HAVE_UNISTD_H) && defined(HAVE_GETPAGESIZE)
 #include <unistd.h>                     // for getpagesize

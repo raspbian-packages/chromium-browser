@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"

@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <vector>
+#include <cstddef>
 
 #include "ui/gfx/gfx_export.h"
 
