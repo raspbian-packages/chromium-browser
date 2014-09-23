@@ -121,7 +121,6 @@
             '<(DEPTH)/chrome/chrome_resources.gyp:chrome_resources',
             '<(DEPTH)/chrome/chrome_resources.gyp:chrome_strings',
             '<(DEPTH)/chrome/common_constants.gyp:common_constants',
-            '<(DEPTH)/courgette/courgette.gyp:courgette_lib',
             '<(DEPTH)/crypto/crypto.gyp:crypto',
             '<(DEPTH)/third_party/bspatch/bspatch.gyp:bspatch',
             '<(DEPTH)/third_party/icu/icu.gyp:icui18n',
