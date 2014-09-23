@@ -3538,7 +3538,7 @@
                 # http://crbug.com/313032 for an example where this has "bit"
                 # us in the past.
                 'cflags': [
-                  '-msse2',
+                  '-msse',
                   '-mfpmath=sse',
                   '-mmmx',  # Allows mmintrin.h for MMX intrinsics.
                   '-m32',

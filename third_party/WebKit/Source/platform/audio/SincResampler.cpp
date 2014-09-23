@@ -37,7 +37,7 @@
 #include "wtf/MathExtras.h"
 
 #if CPU(X86) || CPU(X86_64)
-#include <emmintrin.h>
+#include <xmmintrin.h>
 #endif
 
 using namespace std;

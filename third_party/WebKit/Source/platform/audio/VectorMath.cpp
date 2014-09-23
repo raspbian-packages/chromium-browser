@@ -36,7 +36,7 @@
 #endif
 
 #if CPU(X86) || CPU(X86_64)
-#include <emmintrin.h>
+#include <xmmintrin.h>
 #endif
 
 #if HAVE(ARM_NEON_INTRINSICS)
