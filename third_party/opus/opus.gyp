@@ -59,11 +59,9 @@
           # Suppress a warning given by opus_decoder.c that tells us
           # optimizations are turned off.
           'cflags': [
-            '-Wno-#pragma-messages',
           ],
           'xcode_settings': {
             'WARNING_CFLAGS': [
-              '-Wno-#pragma-messages',
             ],
           },
         }],
