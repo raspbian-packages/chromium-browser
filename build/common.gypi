@@ -3287,6 +3287,8 @@
         'ldflags': [
           '-Wl,-z,now',
           '-Wl,-z,relro',
+          '-Wl,--no-keep-memory',
+          '-Wl,--reduce-memory-overheads',
         ],
       },
     }],
