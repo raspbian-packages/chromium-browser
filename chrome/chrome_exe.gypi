@@ -117,7 +117,7 @@
                 }, { # else branding!="Chrome"
                   'variables': {
                     'name': 'Chromium',
-                    'filename': 'chromium-browser',
+                    'filename': 'chromium',
                     'confdir': 'chromium',
                   },
                 }],
