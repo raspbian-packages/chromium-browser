@@ -138,6 +138,11 @@ SkColor GetBGColor(GtkWidget* widget, WidgetState state) {
       gtk_widget_get_style_context(widget), stateMap[state], &color);
   G_GNUC_END_IGNORE_DEPRECATIONS
 
+  if (color.alpha == 0.0)
+    gtk_style_context_get_background_color(
+        gtk_widget_get_style_context(gtk_widget_get_toplevel(widget)),
+        stateMap[state], &color);
+
   // Hack for default color
   if (color.alpha == 0.0)
     color = {1, 1, 1, 1};
@@ -507,8 +512,11 @@ GtkWidget* NativeThemeGtk2::GetEntry() const {
 GtkWidget* NativeThemeGtk2::GetLabel() const {
   static GtkWidget* fake_label = NULL;
 
-  if (!fake_label)
+  if (!fake_label) {
     fake_label = gtk_label_new("");
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(fake_label), "gtkstyle-fallback");
+  }
 
   return fake_label;
 }
