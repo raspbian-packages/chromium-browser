@@ -383,7 +383,6 @@
             '../extensions/extensions_tests.gyp:extensions_unittests',
             '../gin/gin.gyp:gin_shell',
             '../gpu/gles2_conform_support/gles2_conform_test.gyp:gles2_conform_test',  # TODO(GYP) crbug.com/471920
-            '../gpu/khronos_glcts_support/khronos_glcts_test.gyp:khronos_glcts_test',  # TODO(GYP) crbug.com/471903 to make this complete.
             '../ipc/ipc.gyp:ipc_perftests',
             '../mojo/mojo_base.gyp:mojo_common_unittests',
             '../ppapi/tools/ppapi_tools.gyp:pepper_hash_for_uma',
