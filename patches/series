@@ -1,0 +1,13 @@
+manpage.patch
+clang.patch
+
+disable/promo.patch
+disable/google-api-warning.patch
+
+nspr.patch
+prefs.patch
+third-party-cookies-off-by-default.patch
+ps-print.patch
+chromedriver-revision.patch
+
+webui.patch
