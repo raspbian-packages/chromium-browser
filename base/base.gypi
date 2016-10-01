@@ -676,8 +676,6 @@
           'third_party/dmg_fp/g_fmt.cc',
           'third_party/icu/icu_utf.cc',
           'third_party/icu/icu_utf.h',
-          'third_party/nspr/prtime.cc',
-          'third_party/nspr/prtime.h',
           'third_party/superfasthash/superfasthash.c',
           'third_party/xdg_mime/xdgmime.h',
           'threading/non_thread_safe.h',
