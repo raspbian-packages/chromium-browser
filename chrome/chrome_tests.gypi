@@ -1739,7 +1739,7 @@
         }, {  # Everything but desktop Linux.
           'sources': [ '<@(chrome_interactive_ui_test_non_desktop_linux_sources)' ],
         }],
-        ['OS=="linux" and chromeos==0 and use_ozone==0', {
+        ['OS=="linux" and chromeos==0 and use_ozone==0 and use_gtk3==0', {
           'sources': [ 'browser/ui/libgtk2ui/select_file_dialog_interactive_uitest.cc' ],
           'dependencies': [ '../build/linux/system.gyp:gtk2' ],
         }],

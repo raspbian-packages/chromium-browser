@@ -130,7 +130,7 @@
           'conditions': [
             ['OS=="linux"', {
               'conditions': [
-                [ 'chromeos==0', {
+                [ 'chromeos==0 and use_gtk3==0', {
                   'dependencies': ['../../build/linux/system.gyp:gtk2']
                 }],
               ],

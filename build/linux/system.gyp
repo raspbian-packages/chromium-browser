@@ -108,6 +108,10 @@
             }],
           ],
         },
+      ],
+    }],
+    [ 'use_gtk3==0', {
+      'targets': [
         {
           'target_name': 'gdk',
           'type': 'none',

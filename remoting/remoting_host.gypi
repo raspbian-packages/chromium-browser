@@ -73,7 +73,7 @@
                   'host/linux/unicode_to_keysym.cc',
                 ],
                 }],
-                ['chromeos==0 and use_ozone==0', {
+                ['chromeos==0 and use_ozone==0 and use_gtk3==0', {
                   'dependencies': [
                     # use GTK on Linux, even for Aura builds.
                     '../build/linux/system.gyp:gtk2',
@@ -658,7 +658,7 @@
                 'host/it2me/it2me_native_messaging_host_main.h',
               ],
               'conditions': [
-                ['OS=="linux" and chromeos==0 and use_ozone==0', {
+                ['OS=="linux" and chromeos==0 and use_ozone==0 and use_gtk3==0', {
                   'dependencies': [
                     # Always use GTK on Linux, even for Aura builds.
                     '../build/linux/system.gyp:gtk2',
