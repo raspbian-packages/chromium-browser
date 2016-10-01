@@ -13,7 +13,7 @@
 #include "base/gtest_prod_util.h"
 #include "base/macros.h"
 #include "base/memory/scoped_vector.h"
-#include "third_party/harfbuzz-ng/src/hb.h"
+#include <hb.h>
 #include "third_party/icu/source/common/unicode/ubidi.h"
 #include "third_party/icu/source/common/unicode/uscript.h"
 #include "ui/gfx/render_text.h"
