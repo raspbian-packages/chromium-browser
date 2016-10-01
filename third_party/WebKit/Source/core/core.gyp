@@ -225,7 +225,7 @@
             ],
           },
           'dependencies': [
-            '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '<(DEPTH)/build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }],
        ['"WTF_USE_WEBAUDIO_OPENMAX_DL_FFT=1" in feature_defines', {
@@ -241,7 +241,7 @@
         # Windows shared builder needs extra help for linkage
         ['OS=="win" and "WTF_USE_WEBAUDIO_FFMPEG=1" in feature_defines', {
           'export_dependent_settings': [
-            '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '<(DEPTH)/build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }],
       ],

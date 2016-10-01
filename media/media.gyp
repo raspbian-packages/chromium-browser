@@ -649,7 +649,7 @@
         }],
         ['media_use_ffmpeg==1', {
           'dependencies': [
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }, {  # media_use_ffmpeg==0
           # Exclude the sources that depend on ffmpeg.
@@ -1257,7 +1257,7 @@
         }],
         ['media_use_ffmpeg==1', {
           'dependencies': [
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }, {  # media_use_ffmpeg==0
           'sources!': [
@@ -1411,7 +1411,7 @@
         }],
         ['media_use_ffmpeg==1', {
           'dependencies': [
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }],
       ],
@@ -1951,7 +1951,7 @@
             '../base/base.gyp:test_support_base',
             '../testing/gmock.gyp:gmock',
             '../testing/gtest.gyp:gtest',
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
             '../ui/gfx/gfx.gyp:gfx_geometry',
             'media',
             'media_test_support',

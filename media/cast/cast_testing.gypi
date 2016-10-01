@@ -62,7 +62,7 @@
         # details.  http://crbug.com/558714
         ['OS!="android" and chromecast==0', {
           'dependencies': [
-            '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '<(DEPTH)/build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
           'sources': [
             'test/fake_media_source.cc',
@@ -164,7 +164,7 @@
             'cast_test_utility',
             '<(DEPTH)/testing/gmock.gyp:gmock',
             '<(DEPTH)/testing/gtest.gyp:gtest',
-            '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '<(DEPTH)/build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
           'sources': [
             'sender/h264_vt_encoder_unittest.cc',

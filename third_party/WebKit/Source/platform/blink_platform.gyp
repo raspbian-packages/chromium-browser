@@ -371,7 +371,7 @@
           '<(DEPTH)/third_party/ffmpeg',
         ],
         'dependencies': [
-          '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+          '<(DEPTH)/build/linux/unbundle/ffmpeg.gyp:ffmpeg',
         ],
       }],
       ['"WTF_USE_WEBAUDIO_OPENMAX_DL_FFT=1" in feature_defines', {

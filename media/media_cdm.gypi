@@ -39,7 +39,7 @@
             ['media_use_ffmpeg == 1'  , {
               'defines': ['CLEAR_KEY_CDM_USE_FFMPEG_DECODER'],
               'dependencies': [
-                '<(DEPTH)/third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+                '<(DEPTH)/build/linux/unbundle/ffmpeg.gyp:ffmpeg',
               ],
               'sources': [
                 'cdm/ppapi/external_clear_key/ffmpeg_cdm_audio_decoder.cc',

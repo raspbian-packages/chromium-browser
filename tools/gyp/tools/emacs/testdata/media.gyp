@@ -299,7 +299,7 @@
         # and exclude the sources which depend on ffmpeg.
         ['OS != "android"', {
           'dependencies': [
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }],
         ['OS == "android"', {
@@ -721,7 +721,7 @@
         }],
         ['OS != "android"', {
           'dependencies': [
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
         }],
         ['OS == "android"', {
@@ -1022,7 +1022,7 @@
             '../base/base.gyp:test_support_base',
             '../base/base.gyp:test_support_perf',
             '../testing/gtest.gyp:gtest',
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
           'sources': [
             'ffmpeg/ffmpeg_unittest.cc',
@@ -1055,7 +1055,7 @@
             '../base/base.gyp:test_support_base',
             '../testing/gmock.gyp:gmock',
             '../testing/gtest.gyp:gtest',
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
           'sources': [
             'base/test_data_util.cc',
@@ -1081,7 +1081,7 @@
           'dependencies': [
             'media',
             '../base/base.gyp:base',
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
           'sources': [
             'test/ffmpeg_tests/ffmpeg_tests.cc',
@@ -1093,7 +1093,7 @@
           'dependencies': [
             'media',
             '../base/base.gyp:base',
-            '../third_party/ffmpeg/ffmpeg.gyp:ffmpeg',
+            '../build/linux/unbundle/ffmpeg.gyp:ffmpeg',
           ],
           'sources': [
             'tools/media_bench/media_bench.cc',

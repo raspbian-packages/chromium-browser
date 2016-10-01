@@ -50,7 +50,7 @@
         ],
       },
       'includes': [
-        '../../build/shim_headers.gypi',
+        '../../shim_headers.gypi',
       ],
       'link_settings': {
         'ldflags': [

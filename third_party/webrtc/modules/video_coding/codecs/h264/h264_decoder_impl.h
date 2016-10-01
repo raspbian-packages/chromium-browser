@@ -17,7 +17,7 @@
 #include "webrtc/modules/video_coding/codecs/h264/include/h264.h"
 
 extern "C" {
-#include "third_party/ffmpeg/libavcodec/avcodec.h"
+#include <libavcodec/avcodec.h>
 }  // extern "C"
 
 #include "webrtc/common_video/include/i420_buffer_pool.h"
