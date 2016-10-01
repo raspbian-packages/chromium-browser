@@ -4,6 +4,8 @@
 
 #include "printing/backend/print_backend_cups.h"
 
+#include <cups/ppd.h>
+
 #include <dlfcn.h>
 #include <errno.h>
 #include <pthread.h>
