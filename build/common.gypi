@@ -5985,8 +5985,8 @@
     ['clang==1 and ((OS!="mac" and OS!="ios") or clang_xcode==0) '
         'and OS!="win"', {
       'make_global_settings': [
-        ['CC', '<(make_clang_dir)/bin/clang'],
-        ['CXX', '<(make_clang_dir)/bin/clang++'],
+        ['CC', '/usr/bin/clang'],
+        ['CXX', '/usr/bin/clang++'],
         ['CC.host', '$(CC)'],
         ['CXX.host', '$(CXX)'],
       ],
