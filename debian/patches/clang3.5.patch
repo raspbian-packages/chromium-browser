@@ -1,0 +1,37 @@
+--- a/services/ui/public/cpp/gles2_context.cc
++++ b/services/ui/public/cpp/gles2_context.cc
+@@ -46,7 +46,7 @@ bool GLES2Context::Initialize(
+   gpu::CommandBuffer* command_buffer = command_buffer_proxy_impl_.get();
+   gpu::GpuControl* gpu_control = command_buffer_proxy_impl_.get();
+ 
+-  constexpr gpu::SharedMemoryLimits default_limits;
++  constexpr gpu::SharedMemoryLimits default_limits{};
+   gles2_helper_.reset(new gpu::gles2::GLES2CmdHelper(command_buffer));
+   if (!gles2_helper_->Initialize(default_limits.command_buffer_size))
+     return false;
+--- a/chrome/common/extensions/chrome_extensions_client.h
++++ b/chrome/common/extensions/chrome_extensions_client.h
+@@ -57,9 +57,9 @@ class ChromeExtensionsClient : public Ex
+   static ChromeExtensionsClient* GetInstance();
+ 
+  private:
+-  const ChromeAPIPermissions chrome_api_permissions_;
+-  const ExtensionsAPIPermissions extensions_api_permissions_;
+-  const ChromePermissionMessageProvider permission_message_provider_;
++  ChromeAPIPermissions chrome_api_permissions_;
++  ExtensionsAPIPermissions extensions_api_permissions_;
++  ChromePermissionMessageProvider permission_message_provider_;
+ 
+   // A whitelist of extensions that can script anywhere. Do not add to this
+   // list (except in tests) without consulting the Extensions team first.
+--- a/services/ui/surfaces/surfaces_context_provider.cc
++++ b/services/ui/surfaces/surfaces_context_provider.cc
+@@ -77,7 +77,7 @@ bool SurfacesContextProvider::BindToCurr
+   gpu::CommandBuffer* command_buffer = command_buffer_proxy_impl_.get();
+ 
+   gles2_helper_.reset(new gpu::gles2::GLES2CmdHelper(command_buffer));
+-  constexpr gpu::SharedMemoryLimits default_limits;
++  constexpr gpu::SharedMemoryLimits default_limits{};
+   if (!gles2_helper_->Initialize(default_limits.command_buffer_size))
+     return false;
+   gles2_helper_->SetAutomaticFlushes(false);
