@@ -1,0 +1,119 @@
+#!/usr/bin/make -f
+
+# enable verbose build messages
+export DH_VERBOSE=1
+
+# enable all build hardening flags
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+
+# linker flags to avoid memory allocation issues on i386
+export LDFLAGS+=-Wl,--no-keep-memory -Wl,--reduce-memory-overheads -Wl,--hash-size=7919
+
+# more verbose linker output
+export LDFLAGS+=-Wl,--trace -Wl,--stats
+
+# use clang instead of gcc
+defines=is_clang=true
+defines+=clang_use_chrome_plugins=false
+
+# set the appropriate cpu architecture
+ifeq (i386,$(shell dpkg-architecture -qDEB_HOST_ARCH))
+defines+=host_cpu=\"x86\"
+endif
+ifeq (amd64,$(shell dpkg-architecture -qDEB_HOST_ARCH))
+defines+=host_cpu=\"x64\"
+endif
+
+# disabled features
+defines+=is_debug=false \
+         use_gtk3=false \
+         use_ozone=false \
+         use_gconf=false \
+         use_sysroot=false \
+         use_gnome_keyring=false \
+         treat_warnings_as_errors=false \
+         enable_nacl=false \
+         enable_nacl_nonsfi=false \
+         enable_google_now=false \
+         enable_hangout_services_extension=false \
+         enable_iterator_debugging=false \
+         gold_path=\"\" \
+         linux_use_bundled_binutils=false \
+
+# enabled features
+defines+=use_gio=true \
+         use_gold=true \
+         use_pulseaudio=false \
+         link_pulseaudio=false \
+         proprietary_codecs=true \
+         ffmpeg_branding=\"Chrome\" \
+
+# handle parallel build options
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+njobs=-j$(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+endif
+
+# paths to files needed by flot
+flotpaths=/usr/share/javascript/jquery/*min.js \
+          /usr/share/javascript/jquery-flot/*min.js \
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_configure:
+	for file in $(flotpaths); do ln -sf $$file third_party/flot; done
+	# strip out system third_party libraries
+	./debian/scripts/unbundle
+	# build gn
+	./tools/gn/bootstrap/bootstrap.py -v -s $(njobs)
+	# configure
+	./out/Release/gn gen out/Release --args="$(defines)"
+
+override_dh_auto_build:
+	./out/Release/gn gen out/Release --args="$(defines)"
+	ninja $(njobs) -C out/Release chrome chrome_sandbox chromedriver
+	mv out/Release/chrome out/Release/chromium || true
+	mv out/Release/chrome.1 out/Release/chromium.1 || true
+	mv out/Release/locales/en-US.pak out/Release/resources || true
+	mv out/Release/chrome_sandbox out/Release/chrome-sandbox || true
+	chmod 4755 out/Release/chrome-sandbox # suid sandbox
+
+override_dh_auto_install:
+	dh_auto_install
+	echo "Any files placed in this directory will be sourced prior to executing chromium." \
+	    > debian/chromium/etc/chromium.d/README
+	# update launcher script with build information
+	sed 's|@BUILD_DIST@|$(shell cat /etc/debian_version)|' \
+	    < debian/scripts/chromium > debian/chromium/usr/bin/chromium
+	# move icons into /usr/share
+	for file in $(shell find chrome/app/theme/chromium -name product_logo_[0-9]* -a ! -name *mono*); do \
+	    ext=$$(echo $$file | cut -d\. -f2); \
+	    siz=$$(echo $$file | cut -d_ -f3 | sed s/\.$$ext//); \
+	    dst=debian/chromium/usr/share/icons/hicolor/$$siz\x$$siz/apps; \
+	    mkdir -p $$dst; \
+	    cp $$file $$dst/chromium.$$ext; \
+	    done
+
+override_dh_fixperms:
+	dh_fixperms --exclude chrome-sandbox
+
+override_dh_strip:
+	dh_strip --dbg-package=chromium-dbg
+
+override_dh_auto_clean:
+	rm -rf out Makefile third_party/flot/*
+	find . -name \*.mk -execdir rm -rf {} \;
+	find . -name \*.pyc -execdir rm -rf {} \;
+	#find . -name config.sub -execdir rm -rf {} \;
+	#find . -name config.guess -execdir rm -rf {} \;
+	dh_auto_clean
+
+###################### upstream source downloading ############################
+
+url=https://gsdview.appspot.com/chromium-browser-official
+version=$(shell dpkg-parsechangelog --show-field=version | sed s/-.*//)
+tarball=chromium-$(version).tar.xz
+
+get-orig-source:
+	cd .. && wget -c $(url)/$(tarball)
+	mk-origtargz $(shell for f in $(excluded); do echo --exclude-file $$f; done) ../$(tarball)

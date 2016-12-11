@@ -1,0 +1,16 @@
+description: avoid a clang 4.0 compiler intrinsic
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/third_party/skia/src/opts/SkRasterPipeline_opts.h
++++ b/third_party/skia/src/opts/SkRasterPipeline_opts.h
+@@ -40,8 +40,10 @@ static inline void SK_VECTORCALL stage_1
+                                            Sk4f  r, Sk4f  g, Sk4f  b, Sk4f  a,
+                                            Sk4f dr, Sk4f dg, Sk4f db, Sk4f da) {
+ #if defined(__clang__)
++#if __has_builtin(__builtin_assume)
+     __builtin_assume(tail > 0);  // This flourish lets Clang compile away any tail==0 code.
+ #endif
++#endif
+     kernel(st->ctx<void*>(), x,tail, r,g,b,a, dr,dg,db,da);
+     if (kCallNext) {
+         st->next(x,tail, r,g,b,a, dr,dg,db,da);
