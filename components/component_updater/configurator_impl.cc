@@ -98,7 +98,7 @@ ConfiguratorImpl::ConfiguratorImpl(
       cmdline->GetSwitchValueASCII(switches::kComponentUpdater), ",",
       base::KEEP_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
   fast_update_ = HasSwitchValue(switch_values, kSwitchFastUpdate);
-  pings_enabled_ = !HasSwitchValue(switch_values, kSwitchDisablePings);
+  pings_enabled_ = false;
   deltas_enabled_ = !HasSwitchValue(switch_values, kSwitchDisableDeltaUpdates);
 
 #if defined(OS_WIN)
