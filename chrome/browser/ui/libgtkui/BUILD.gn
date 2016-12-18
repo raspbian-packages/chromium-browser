@@ -135,6 +135,7 @@ component("libgtk2ui") {
   ]
 }
 
+if (use_gtk3) {
 component("libgtk3ui") {
   sources = common_sources
   configs += common_configs
@@ -147,4 +148,5 @@ component("libgtk3ui") {
   public_deps = [
     "//chrome/browser:theme_properties",
   ]
+}
 }
