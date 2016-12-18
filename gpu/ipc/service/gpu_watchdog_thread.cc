@@ -36,7 +36,7 @@ const int kGpuTimeout = 30000;
 // infected machines.
 const int kGpuTimeout = 15000;
 #else
-const int kGpuTimeout = 10000;
+const int kGpuTimeout = 20000;
 #endif
 
 #if defined(USE_X11)
