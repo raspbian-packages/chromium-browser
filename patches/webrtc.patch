@@ -1,0 +1,21 @@
+description: fix unique_ptr casting problem detected by clang
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/third_party/webrtc/modules/desktop_capture/screen_capturer_x11.cc
++++ b/third_party/webrtc/modules/desktop_capture/screen_capturer_x11.cc
+@@ -407,12 +407,12 @@ std::unique_ptr<DesktopCapturer> Desktop
+   if (!options.x_display())
+     return nullptr;
+ 
+-  std::unique_ptr<ScreenCapturerLinux> capturer(new ScreenCapturerLinux());
+-  if (!capturer.get()->Init(options)) {
++  ScreenCapturerLinux *capturer = new ScreenCapturerLinux();
++  if (!capturer->Init(options)) {
+     return nullptr;
+   }
+ 
+-  return capturer;
++  return std::unique_ptr<DesktopCapturer>(capturer);
+ }
+ 
+ }  // namespace webrtc

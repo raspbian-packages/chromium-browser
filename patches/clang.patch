@@ -1,0 +1,25 @@
+description: use system clang compilers
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/build/toolchain/gcc_toolchain.gni
++++ b/build/toolchain/gcc_toolchain.gni
+@@ -482,7 +482,7 @@ template("clang_toolchain") {
+   }
+ 
+   gcc_toolchain(target_name) {
+-    prefix = rebase_path("$clang_base_path/bin", root_build_dir)
++    prefix = "/usr/bin"
+     cc = "$prefix/clang"
+     cxx = "$prefix/clang++"
+     ld = cxx
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -401,7 +401,7 @@ config("compiler") {
+   # clang-cl (used if is_win) doesn't expose this flag.
+   # Currently disabled for nacl since its toolchain lacks this flag (too old).
+   # TODO(zforman): Once nacl's toolchain is updated, remove check.
+-  if (is_clang && is_linux) {
++  if (false) {
+     absolute_path = rebase_path("//.")
+     cflags += [ "-fdebug-prefix-map=$absolute_path=." ]
+   }

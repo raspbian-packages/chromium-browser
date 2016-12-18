@@ -1,0 +1,6 @@
+build/secondary/third_party/libjpeg_turbo/BUILD.gn
+third_party/libpng/BUILD.gn
+third_party/libwebp/BUILD.gn
+third_party/libxml/BUILD.gn
+third_party/libxslt/BUILD.gn
+third_party/yasm/yasm_assemble.gni
