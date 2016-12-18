@@ -1,0 +1,13 @@
+description: fix clang uninitialized const member error
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/third_party/WebKit/Source/modules/indexeddb/IDBTransaction.cpp
++++ b/third_party/WebKit/Source/modules/indexeddb/IDBTransaction.cpp
+@@ -133,6 +133,7 @@ IDBTransaction::IDBTransaction(Execution
+       m_database(db),
+       m_openDBRequest(openDBRequest),
+       m_mode(WebIDBTransactionModeVersionChange),
++      m_scope(),
+       m_state(Inactive),
+       m_oldDatabaseMetadata(oldMetadata) {
+   DCHECK(m_database);
