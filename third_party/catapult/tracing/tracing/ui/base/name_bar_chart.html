@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/tracing/base/raf.html">
+<link rel="import" href="/tracing/ui/base/bar_chart.html">
+<link rel="import" href="/tracing/ui/base/d3.html">
+
+<script>
+'use strict';
+
+tr.exportTo('tr.ui.b', function() {
+  var BarChart = tr.ui.b.BarChart;
+
+  // @constructor
+  var NameBarChart = tr.ui.b.define('name-bar-chart', BarChart);
+
+  NameBarChart.prototype = {
+    __proto__: BarChart.prototype,
+
+    get barHeight() {
+      return (this.height - this.margin.top - this.margin.bottom) /
+        this.data.length;
+    },
+
+    getDataPointAtChartPoint_: function(chartPoint) {
+      return {
+        x: BarChart.prototype.getDataPointAtChartPoint_.call(
+            this, chartPoint).x,
+        y: parseInt(Math.floor(
+            (this.chartAreaSize.height - chartPoint.y) / this.barHeight))
+      };
+    },
+
+    getXForDatum_: function(datum, index) {
+      return index;
+    },
+
+    get maxYAxisWidth() {
+      return tr.b.Statistics.max(
+          this.data_, d => tr.ui.b.getSVGTextWidth(this, d.x));
+    },
+
+    updateYAxis_: function(yAxis) {
+      tr.b.requestAnimationFrame(() => {
+        var maxTextWidth = this.maxYAxisWidth;
+        yAxis.selectAll('*').remove();
+        var nameTexts = yAxis.selectAll('text').data(this.data_);
+        nameTexts
+          .enter()
+          .append('text')
+          .attr('x', d => maxTextWidth - tr.ui.b.getSVGTextWidth(this, d.x) -
+              this.margin.left)
+          .attr('y', (d, index) => this.verticalScale_(index))
+          .text(d => d.x);
+        nameTexts.exit().remove();
+
+        var previousTop = undefined;
+        for (var text of nameTexts[0]) {
+          var bbox = text.getBBox();
+          if ((previousTop === undefined) ||
+              (previousTop > (bbox.y + bbox.height))) {
+            previousTop = bbox.y;
+          } else {
+            text.style.opacity = 0;
+          }
+        }
+      });
+    }
+  };
+
+  return {
+    NameBarChart: NameBarChart
+  };
+});
+</script>
