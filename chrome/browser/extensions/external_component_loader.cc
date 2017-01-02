@@ -39,6 +39,9 @@ ExternalComponentLoader::~ExternalComponentLoader() {}
 
 void ExternalComponentLoader::StartLoading() {
   prefs_.reset(new base::DictionaryValue());
+  LoadFinished();
+  return;
+
   AddExternalExtension(extension_misc::kInAppPaymentsSupportAppId);
 
   if (HotwordServiceFactory::IsHotwordAllowed(profile_))
