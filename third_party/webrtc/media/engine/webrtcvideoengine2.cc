@@ -161,10 +161,6 @@ bool CodecIsInternallySupported(const std::string& codec_name) {
   if (CodecNamesEq(codec_name, kVp8CodecName)) {
     return true;
   }
-  if (CodecNamesEq(codec_name, kVp9CodecName)) {
-    return webrtc::VP9Encoder::IsSupported() &&
-           webrtc::VP9Decoder::IsSupported();
-  }
   if (CodecNamesEq(codec_name, kH264CodecName)) {
     return webrtc::H264Encoder::IsSupported() &&
         webrtc::H264Decoder::IsSupported();
