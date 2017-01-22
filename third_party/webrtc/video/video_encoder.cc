@@ -24,9 +24,6 @@ VideoEncoder* VideoEncoder::Create(VideoEncoder::EncoderType codec_type) {
       return H264Encoder::Create();
     case kVp8:
       return VP8Encoder::Create();
-    case kVp9:
-      RTC_DCHECK(VP9Encoder::IsSupported());
-      return VP9Encoder::Create();
     case kUnsupportedCodec:
       RTC_NOTREACHED();
       return nullptr;
