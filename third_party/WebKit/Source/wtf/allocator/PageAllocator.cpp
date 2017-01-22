@@ -41,6 +41,10 @@
 #include <errno.h>
 #include <sys/mman.h>
 
+#if OS(LINUX) && defined(MADV_FREE)
+#undef MADV_FREE
+#endif
+
 #ifndef MADV_FREE
 #define MADV_FREE MADV_DONTNEED
 #endif
