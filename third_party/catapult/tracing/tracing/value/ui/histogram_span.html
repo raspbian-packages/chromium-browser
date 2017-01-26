@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2015 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/tracing/base/statistics.html">
+<link rel="import" href="/tracing/ui/base/box_chart.html">
+<link rel="import" href="/tracing/ui/base/drag_handle.html">
+<link rel="import" href="/tracing/ui/base/name_bar_chart.html">
+<link rel="import" href="/tracing/value/ui/diagnostic_map_table.html">
+<link rel="import" href="/tracing/value/ui/diagnostic_span.html">
+<link rel="import" href="/tracing/value/ui/scalar_map_table.html">
+
+<dom-module id='tr-v-ui-histogram-span'>
+  <template>
+    <style>
+    #container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    #chart {
+      flex-grow: 1;
+      display: none;
+    }
+    #drag_handle {
+      display: none;
+    }
+    #chart svg {
+      display: block;
+    }
+    </style>
+
+    <div id="container">
+      <div id="chart"></div>
+      <div id="stats_container">
+        <tr-v-ui-scalar-map-table id="stats"></tr-v-ui-scalar-map-table>
+      </div>
+    </div>
+    <tr-ui-b-drag-handle id="drag_handle"></tr-ui-b-drag-handle>
+
+    <tr-v-ui-diagnostic-map-table id="histogram_diagnostics"></tr-v-ui-diagnostic-map-table>
+    <tr-v-ui-diagnostic-map-table id="sample_diagnostics"></tr-v-ui-diagnostic-map-table>
+  </template>
+</dom-module>
+
+<script>
+'use strict';
+
+var DELTA = String.fromCharCode(916);
+
+var ABS_DELTA_AVG_NAME = 'abs' + DELTA + 'avg';
+
+var DEFAULT_BAR_HEIGHT_PX = 5;
+
+var TRUNCATE_BIN_MARGIN = 0.15;
+
+Polymer({
+  is: 'tr-v-ui-histogram-span',
+
+  created: function() {
+    this.histogram_ = undefined;
+    this.referenceHistogram_ = undefined;
+    this.chartWidth_ = undefined;
+    this.chartHeight_ = undefined;
+    this.mouseDownBin_ = undefined;
+    this.brushedBins_ = [];
+    this.prevBrushedBins_ = [];
+  },
+
+  ready: function() {
+    this.$.drag_handle.target = this.$.container;
+    this.$.drag_handle.addEventListener(
+        'drag-handle-resize', this.onResize_.bind(this));
+  },
+
+  onResize_: function(event) {
+    event.stopPropagation();
+    var heightPx = parseInt(this.$.container.style.height);
+    if (heightPx < this.defaultChartHeight) {
+      heightPx = this.defaultChartHeight;
+      this.$.container.style.height = this.defaultChartHeight + 'px';
+    }
+    this.chart_.height = heightPx;
+  },
+
+  get chartWidth() {
+    return this.chartWidth_ || this.defaultChartWidth;
+  },
+
+  set chartWidth(width) {
+    this.chartWidth_ = width;
+  },
+
+  get chartHeight() {
+    return this.chartHeight_ || this.defaultChartHeight;
+  },
+
+  set chartHeight(height) {
+    this.chartHeight_ = height;
+  },
+
+  get barHeight() {
+    return this.chart_.barHeight;
+  },
+
+  set barHeight(px) {
+    this.chartHeight = this.computeChartHeight_(px);
+  },
+
+  computeChartHeight_: function(barHeightPx) {
+    return (this.chart_.margin.top +
+        this.chart_.margin.bottom +
+        (barHeightPx * this.histogram.allBins.length));
+  },
+
+  get defaultChartHeight() {
+    if (this.histogram && this.histogram.allBins.length === 1) {
+      return 150;
+    }
+    return this.computeChartHeight_(DEFAULT_BAR_HEIGHT_PX);
+  },
+
+  get defaultChartWidth() {
+    return 300;
+  },
+
+  get brushedBins() {
+    return this.brushedBins_;
+  },
+
+  updateBrushedRange_: function(binIndex) {
+    var brushedBinIndices = new tr.b.Range();
+    brushedBinIndices.addValue(tr.b.clamp(
+        this.mouseDownBinIndex_, 0, this.histogram.allBins.length - 1));
+    brushedBinIndices.addValue(tr.b.clamp(
+        binIndex, 0, this.histogram.allBins.length - 1));
+    brushedBinIndices.max += 1;
+    this.chart_.brushedRange = brushedBinIndices;
+
+    this.brushedBins_ = [];
+    for (var i = brushedBinIndices.min; i < brushedBinIndices.max; ++i) {
+      this.brushedBins.push(this.histogram.allBins[i]);
+    }
+  },
+
+  onMouseDown_: function(chartEvent) {
+    chartEvent.stopPropagation();
+    if (!this.histogram) {
+      return;
+    }
+    this.prevBrushedBins_ = this.brushedBins_;
+    this.mouseDownBinIndex_ = chartEvent.y;
+    this.updateBrushedRange_(chartEvent.y);
+  },
+
+  onMouseMove_: function(chartEvent) {
+    chartEvent.stopPropagation();
+    if (!this.histogram) {
+      return;
+    }
+    this.updateBrushedRange_(chartEvent.y);
+  },
+
+  onMouseUp_: function(chartEvent) {
+    chartEvent.stopPropagation();
+    if (!this.histogram) {
+      return;
+    }
+    this.updateBrushedRange_(chartEvent.y);
+    if (this.prevBrushedBins_.length === 1 &&
+        this.brushedBins_.length === 1 &&
+        this.prevBrushedBins_[0] === this.brushedBins_[0]) {
+      this.brushedBins_ = [];
+      this.chart_.brushedRange = new tr.b.Range();
+    }
+    this.updateDiagnostics_(this.brushedBins);
+    this.mouseDownBinIndex_ = undefined;
+  },
+
+  updateDiagnostics_: function(bins) {
+    var maps = [];
+    for (var bin of bins) {
+      for (var map of bin.diagnosticMaps) {
+        maps.push(map);
+      }
+    }
+
+    if (maps.length === 0) {
+      this.$.sample_diagnostics.style.display = 'none';
+      return;
+    }
+
+    this.$.sample_diagnostics.diagnosticMaps = maps;
+    this.$.sample_diagnostics.style.display = 'block';
+  },
+
+  get histogram() {
+    return this.histogram_;
+  },
+
+  set histogram(histogram) {
+    if (histogram === this.histogram_) {
+      return;
+    }
+    this.histogram_ = histogram;
+    this.updateContents_();
+  },
+
+  get referenceHistogram() {
+    return this.referenceHistogram_;
+  },
+
+  set referenceHistogram(histogram) {
+    if (histogram === this.referenceHistogram_) {
+      return;
+    }
+    this.referenceHistogram_ = histogram;
+    if (this.histogram) {
+      this.updateContents_();
+    }
+  },
+
+  getDeltaScalars_: function(scalarMap) {
+    if (!(this.referenceHistogram instanceof tr.v.Histogram) ||
+        (this.histogram.unit !== this.referenceHistogram.unit) ||
+        (this.histogram.numValues === 0) &&
+        (this.referenceHistogram.numValues === 0)) {
+      return;
+    }
+
+    var absDeltaAvg = this.histogram.average -
+      this.referenceHistogram.average;
+    scalarMap.set(ABS_DELTA_AVG_NAME, new tr.v.ScalarNumeric(
+        this.histogram.unit.correspondingDeltaUnit,
+        absDeltaAvg));
+
+    var suffix = tr.b.Unit.nameSuffixForImprovementDirection(
+        this.histogram.unit.improvementDirection);
+
+    scalarMap.set('%' + DELTA + 'avg', new tr.v.ScalarNumeric(
+        tr.b.Unit.byName['normalizedPercentageDelta' + suffix],
+        absDeltaAvg / this.referenceHistogram.average));
+
+    scalarMap.set('z-score', new tr.v.ScalarNumeric(
+        tr.b.Unit.byName['sigmaDelta' + suffix],
+        absDeltaAvg / this.referenceHistogram.standardDeviation));
+
+    var mwu = tr.b.Statistics.mwu(
+        this.histogram.sampleValues, this.referenceHistogram.sampleValues);
+    scalarMap.set('p-value', new tr.v.ScalarNumeric(
+        tr.b.Unit.byName.unitlessNumber,
+        mwu.p));
+
+    scalarMap.set('U', new tr.v.ScalarNumeric(
+        tr.b.Unit.byName.unitlessNumber,
+        mwu.U));
+
+    if (this.histogram.unit.improvementDirection !==
+        tr.b.ImprovementDirection.DONT_CARE) {
+      this.$.stats.setSignificanceForKey(ABS_DELTA_AVG_NAME, mwu.significance);
+    }
+  },
+
+  set isYLogScale(logScale) {
+    this.chart_.isYLogScale = logScale;
+  },
+
+  updateContents_: function() {
+    this.$.chart.style.display = '';
+    this.$.drag_handle.style.display = 'none';
+    this.$.sample_diagnostics.style.display = 'none';
+    this.$.container.style.justifyContent = '';
+    this.brushedBins_ = [];
+
+    if (!this.histogram) {
+      return;
+    }
+    this.$.container.style.display = '';
+
+    var scalarMap = new Map();
+    this.getDeltaScalars_(scalarMap);
+    for (var [name, scalar] of this.histogram.statisticsScalars) {
+      scalarMap.set(name, scalar);
+    }
+    this.$.stats.scalarMap = scalarMap;
+
+    if (this.histogram.diagnostics.size > 0) {
+      var diagnosticMap = new tr.v.d.DiagnosticMap();
+      for (var [key, diagnostic] of this.histogram.diagnostics) {
+        // Hide the 'merged from' diagnostic, which is an implementation detail.
+        if (key !== tr.v.MERGED_FROM_DIAGNOSTIC_KEY) {
+          diagnosticMap.set(key, diagnostic);
+        }
+      }
+      this.$.histogram_diagnostics.diagnosticMaps = [diagnosticMap];
+      this.$.histogram_diagnostics.style.display = 'block';
+    } else {
+      this.$.histogram_diagnostics.style.display = 'none';
+    }
+
+    if (this.histogram.numValues <= 1) {
+      this.updateDiagnostics_(this.histogram.allBins);
+      this.$.container.style.justifyContent = 'flex-end';
+      return;
+    }
+
+    this.$.chart.style.display = 'block';
+    this.$.drag_handle.style.display = 'block';
+
+    if (this.histogram.allBins.length === 1) {
+      this.chart_ = new tr.ui.b.BoxChart();
+      this.chart_.width = this.chartWidth;
+      this.chart_.height = this.chartHeight;
+      this.chart_.hideXAxis = true;
+      this.chart_.margin.top = 10;
+      this.chart_.margin.bottom = 10;
+      this.chart_.margin.right = 0;
+      this.chart_.data = [
+        {
+          x: '',
+          color: 'blue',
+          percentile_0: this.histogram.running.min,
+          percentile_25: this.histogram.getApproximatePercentile(0.25),
+          percentile_50: this.histogram.getApproximatePercentile(0.5),
+          percentile_75: this.histogram.getApproximatePercentile(0.75),
+          percentile_100: this.histogram.running.max,
+        }
+      ];
+      Polymer.dom(this.$.chart).appendChild(this.chart_);
+      return;
+    }
+
+    this.chart_ = new tr.ui.b.NameBarChart();
+    this.chart_.width = this.chartWidth;
+    this.chart_.height = this.chartHeight;
+    this.chart_.margin.top = 20;
+    this.chart_.margin.bottom = 28;
+    this.chart_.margin.left = 70;
+    this.chart_.margin.right = 30;
+    this.chart_.addEventListener('item-mousedown',
+        this.onMouseDown_.bind(this));
+    this.chart_.addEventListener('item-mousemove',
+        this.onMouseMove_.bind(this));
+    this.chart_.addEventListener('item-mouseup',
+        this.onMouseUp_.bind(this));
+    this.chart_.hideLegend = true;
+    this.chart_.getDataSeries('y').color = 'blue';
+    this.chart_.xAxisLabel = '#';
+    this.chart_.brushedRange = new tr.b.Range();
+    Polymer.dom(this.$.chart).appendChild(this.chart_);
+
+    var chartData = [];
+    var binCounts = [];
+    for (var bin of this.histogram.allBins) {
+      var x = bin.range.min;
+      if (x === -Number.MAX_VALUE) {
+        x = '<' + new tr.v.ScalarNumeric(
+            this.histogram.unit, bin.range.max).toString();
+      } else {
+        x = new tr.v.ScalarNumeric(this.histogram.unit, x).toString();
+      }
+      chartData.push({x: x, y: bin.count});
+      binCounts.push(bin.count);
+    }
+
+    // If the largest 1 or 2 bins are more than twice as large as the next
+    // largest bin, then set the dataRange max to TRUNCATE_BIN_MARGIN% more than
+    // that next largest bin.
+    binCounts.sort((x, y) => y - x);
+    var dataRange = tr.b.Range.fromExplicitRange(0, binCounts[0]);
+    if (binCounts[1] > 0 && binCounts[0] > (binCounts[1] * 2)) {
+      dataRange.max = binCounts[1] * (1 + TRUNCATE_BIN_MARGIN);
+    }
+    if (binCounts[2] > 0 && binCounts[1] > (binCounts[2] * 2)) {
+      dataRange.max = binCounts[2] * (1 + TRUNCATE_BIN_MARGIN);
+    }
+    this.chart_.overrideDataRange = dataRange;
+
+    // Set the data to render the chart in order to compute maxYAxisWidth,
+    // then set the left margin and re-render the chart.
+    // https://github.com/catapult-project/catapult/issues/2958
+    this.chart_.data = chartData;
+    tr.b.requestAnimationFrame(() => {
+      this.chart_.margin.left = this.chart_.maxYAxisWidth + 2;
+      // Reset the chart data to force it to take the new margin into account.
+      this.chart_.data = chartData;
+    });
+  }
+});
+</script>

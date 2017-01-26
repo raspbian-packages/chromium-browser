@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2014 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/tracing/base/raf.html">
+<link rel="import" href="/tracing/ui/base/column_chart.html">
+<link rel="import" href="/tracing/ui/base/d3.html">
+
+<script>
+'use strict';
+
+tr.exportTo('tr.ui.b', function() {
+  var ColumnChart = tr.ui.b.ColumnChart;
+
+  var MIN_GUIDELINE_HEIGHT_PX = 3;
+
+  // TODO(benjhayden): Compute these using a generalization of
+  // getSVGTextWidth().
+  var TEXT_HEIGHT_PX = 17;
+  var CHECKBOX_WIDTH_PX = 18;
+
+  // @constructor
+  var NameColumnChart = tr.ui.b.define('name-column-chart', ColumnChart);
+
+  NameColumnChart.prototype = {
+    __proto__: ColumnChart.prototype,
+
+    getXForDatum_: function(datum, index) {
+      return index;
+    },
+
+    get xAxisTickOffset() {
+      return 0.5;
+    },
+
+    updateXAxis_: function(xAxis) {
+      xAxis.selectAll('*').remove();
+
+      // Draw the tick labels from |this.data_[*].x|.
+      // Lay them out so that the text doesn't overlap.
+      // They may overhang into |this.margin.right|.
+      var nameTexts = xAxis.selectAll('text')
+        .data(this.data_);
+      nameTexts
+        .enter()
+        .append('text')
+        .attr('transform', (d, index) => 'translate(0, ' +
+            TEXT_HEIGHT_PX * (this.data_.length - index) + ')')
+        .attr('x', (d, index) => this.xScale_(index))
+        .attr('y', d => this.chartAreaSize.height)
+        .text(d => d.x);
+      nameTexts.exit().remove();
+
+      // Draw lines to guide the eye from bottom center of the column to the
+      // tick label.
+      var guideLines = xAxis.selectAll('line.guide').data(this.data_);
+      guideLines.enter()
+        .append('line')
+        .attr('x1', (d, index) => this.xScale_(index + this.xAxisTickOffset))
+        .attr('x2', (d, index) => this.xScale_(index + this.xAxisTickOffset))
+        .attr('y1', () => this.chartAreaSize.height)
+        .attr('y2', (d, index) => this.chartAreaSize.height + Math.max(
+            MIN_GUIDELINE_HEIGHT_PX,
+            (TEXT_HEIGHT_PX * (this.data_.length - index - 1))));
+    }
+  };
+
+  return {
+    NameColumnChart: NameColumnChart
+  };
+});
+</script>
