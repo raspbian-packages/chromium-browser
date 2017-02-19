@@ -433,11 +433,6 @@ std::vector<VideoCodec> DefaultVideoCodecList() {
   AddCodecAndMaybeRtxCodec(
       MakeVideoCodecWithDefaultFeedbackParams(kDefaultVp8PlType, kVp8CodecName),
       &codecs);
-  if (webrtc::VP9Encoder::IsSupported() && webrtc::VP9Decoder::IsSupported()) {
-    AddCodecAndMaybeRtxCodec(MakeVideoCodecWithDefaultFeedbackParams(
-                                 kDefaultVp9PlType, kVp9CodecName),
-                             &codecs);
-  }
   if (webrtc::H264Encoder::IsSupported() &&
       webrtc::H264Decoder::IsSupported()) {
     VideoCodec codec = MakeVideoCodecWithDefaultFeedbackParams(
