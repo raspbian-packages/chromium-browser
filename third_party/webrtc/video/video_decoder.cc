@@ -32,9 +32,6 @@ VideoDecoder* VideoDecoder::Create(VideoDecoder::DecoderType codec_type) {
       return H264Decoder::Create();
     case kVp8:
       return VP8Decoder::Create();
-    case kVp9:
-      RTC_DCHECK(VP9Decoder::IsSupported());
-      return VP9Decoder::Create();
     case kUnsupportedCodec:
       LOG(LS_ERROR) << "Creating NullVideoDecoder for unsupported codec.";
       return new NullVideoDecoder();

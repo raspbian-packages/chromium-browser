@@ -89,7 +89,6 @@ rtc_static_library("video_coding") {
     ":webrtc_h264",
     ":webrtc_i420",
     ":webrtc_vp8",
-    ":webrtc_vp9",
     "../..:webrtc_common",
     "../../common_video",
     "../../system_wrappers",
