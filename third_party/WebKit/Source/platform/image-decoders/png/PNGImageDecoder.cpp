@@ -65,7 +65,7 @@ inline sk_sp<SkColorSpace> readColorSpace(png_structp png, png_infop info) {
 
   png_charp name = nullptr;
   int compression = 0;
-  png_bytep profile = nullptr;
+  png_charp profile = nullptr;
   png_uint_32 length = 0;
   if (png_get_iCCP(png, info, &name, &compression, &profile, &length)) {
     return SkColorSpace::MakeICC(profile, length);
