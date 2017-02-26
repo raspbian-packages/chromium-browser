@@ -17,12 +17,6 @@
  */
 
 #include <stdint.h>
-// Chromium: Windows doesn't provide stdatomic.h, so use the compat version.
-#if defined(_MSC_VER)
-#include <compat/atomics/win32/stdatomic.h>
-#else
-#include <stdatomic.h>
-#endif
 
 #include "cpu.h"
 #include "cpu_internal.h"
@@ -50,20 +44,7 @@
 #include <unistd.h>
 #endif
 
-static atomic_int cpu_flags = ATOMIC_VAR_INIT(-1);
-
-static int get_cpu_flags(void)
-{
-    if (ARCH_AARCH64)
-        return ff_get_cpu_flags_aarch64();
-    if (ARCH_ARM)
-        return ff_get_cpu_flags_arm();
-    if (ARCH_PPC)
-        return ff_get_cpu_flags_ppc();
-    if (ARCH_X86)
-        return ff_get_cpu_flags_x86();
-    return 0;
-}
+static int flags, checked;
 
 void av_force_cpu_flags(int arg){
     if (   (arg & ( AV_CPU_FLAG_3DNOW    |
@@ -88,23 +69,33 @@ void av_force_cpu_flags(int arg){
         arg |= AV_CPU_FLAG_MMX;
     }
 
-    atomic_store_explicit(&cpu_flags, arg, memory_order_relaxed);
+    flags   = arg;
+    checked = arg != -1;
 }
 
 int av_get_cpu_flags(void)
 {
-    int flags = atomic_load_explicit(&cpu_flags, memory_order_relaxed);
-    if (flags == -1) {
-        flags = get_cpu_flags();
-        atomic_store_explicit(&cpu_flags, flags, memory_order_relaxed);
-    }
+    if (checked)
+        return flags;
+
+    if (ARCH_AARCH64)
+        flags = ff_get_cpu_flags_aarch64();
+    if (ARCH_ARM)
+        flags = ff_get_cpu_flags_arm();
+    if (ARCH_PPC)
+        flags = ff_get_cpu_flags_ppc();
+    if (ARCH_X86)
+        flags = ff_get_cpu_flags_x86();
+
+    checked = 1;
     return flags;
 }
 
 void av_set_cpu_flags_mask(int mask)
 {
-    atomic_store_explicit(&cpu_flags, get_cpu_flags() & mask,
-                          memory_order_relaxed);
+    checked       = 0;
+    flags         = av_get_cpu_flags() & mask;
+    checked       = 1;
 }
 
 int av_parse_cpu_flags(const char *s)
