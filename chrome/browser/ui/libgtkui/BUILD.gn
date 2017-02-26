@@ -154,6 +154,7 @@ component("libgtk2ui") {
 
 # This is compiled with "all" even when it's not referenced to ensure that
 # GTK3 continues to build. GTK3 is explicitly specified by some distros.
+if (use_gtk3) {
 component("libgtk3ui") {
   sources = common_sources + [
               "native_theme_gtk3.cc",
@@ -176,4 +177,5 @@ component("libgtk3ui") {
   public_deps = [
     "//chrome/browser:theme_properties",
   ]
+}
 }
