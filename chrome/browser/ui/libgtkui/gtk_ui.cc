@@ -618,7 +618,7 @@ std::unique_ptr<views::Border> GtkUi::CreateNativeBorder(
   if (owning_button->GetNativeTheme() != native_theme_)
     return std::move(border);
 
-  std::unique_ptr<views::LabelButtonAssetBorder> gtk_border(
+  views::LabelButtonAssetBorder* gtk_border(
       new views::LabelButtonAssetBorder(owning_button->style()));
 
   gtk_border->set_insets(border->GetInsets());
@@ -676,7 +676,7 @@ std::unique_ptr<views::Border> GtkUi::CreateNativeBorder(
             : nullptr);
   }
 
-  return gtk_border;
+  return std::unique_ptr<views::Border>(gtk_border);
 }
 
 void GtkUi::AddWindowButtonOrderObserver(
