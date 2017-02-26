@@ -1,0 +1,14 @@
+description: use correct argument type for jessie's png12
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/third_party/WebKit/Source/platform/image-decoders/png/PNGImageDecoder.cpp
++++ b/third_party/WebKit/Source/platform/image-decoders/png/PNGImageDecoder.cpp
+@@ -65,7 +65,7 @@ inline sk_sp<SkColorSpace> readColorSpac
+ 
+   png_charp name = nullptr;
+   int compression = 0;
+-  png_bytep profile = nullptr;
++  png_charp profile = nullptr;
+   png_uint_32 length = 0;
+   if (png_get_iCCP(png, info, &name, &compression, &profile, &length)) {
+     return SkColorSpace::MakeICC(profile, length);

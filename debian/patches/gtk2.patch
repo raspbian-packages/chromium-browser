@@ -1,0 +1,29 @@
+description: avoid dependence on gtk3
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -370,7 +370,7 @@ group("both_gn_and_gyp") {
+   if (is_linux && !is_chromeos && !is_chromecast && !use_ozone) {
+     # TODO(thomasanderson): Remove this once we build using
+     # GTK3 by default. (crbug.com/132847, crbug.com/79722)
+-    deps += [ "//chrome/browser/ui/libgtkui:libgtk3ui" ]
++    deps += [ "//chrome/browser/ui/libgtkui:libgtkui" ]
+   }
+ 
+   if (use_ozone) {
+--- a/chrome/browser/ui/libgtkui/BUILD.gn
++++ b/chrome/browser/ui/libgtkui/BUILD.gn
+@@ -154,6 +154,7 @@ component("libgtk2ui") {
+ 
+ # This is compiled with "all" even when it's not referenced to ensure that
+ # GTK3 continues to build. GTK3 is explicitly specified by some distros.
++if (use_gtk3) {
+ component("libgtk3ui") {
+   sources = common_sources + [
+               "native_theme_gtk3.cc",
+@@ -177,3 +178,4 @@ component("libgtk3ui") {
+     "//chrome/browser:theme_properties",
+   ]
+ }
++}

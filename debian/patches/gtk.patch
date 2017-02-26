@@ -1,0 +1,23 @@
+description: fix unique_ptr casting problem detected by clang
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/chrome/browser/ui/libgtkui/gtk_ui.cc
++++ b/chrome/browser/ui/libgtkui/gtk_ui.cc
+@@ -618,7 +618,7 @@ std::unique_ptr<views::Border> GtkUi::Cr
+   if (owning_button->GetNativeTheme() != native_theme_)
+     return std::move(border);
+ 
+-  std::unique_ptr<views::LabelButtonAssetBorder> gtk_border(
++  views::LabelButtonAssetBorder* gtk_border(
+       new views::LabelButtonAssetBorder(owning_button->style()));
+ 
+   gtk_border->set_insets(border->GetInsets());
+@@ -676,7 +676,7 @@ std::unique_ptr<views::Border> GtkUi::Cr
+             : nullptr);
+   }
+ 
+-  return gtk_border;
++  return std::unique_ptr<views::Border>(gtk_border);
+ }
+ 
+ void GtkUi::AddWindowButtonOrderObserver(
