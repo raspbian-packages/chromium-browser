@@ -554,29 +554,9 @@ def write_gn_ninja(path, root_gen_dir, options):
         'base/time/time_posix.cc',
         'base/trace_event/heap_profiler_allocation_register_posix.cc',
     ])
-    static_libraries['libevent'] = {
-        'sources': [
-            'base/third_party/libevent/buffer.c',
-            'base/third_party/libevent/evbuffer.c',
-            'base/third_party/libevent/evdns.c',
-            'base/third_party/libevent/event.c',
-            'base/third_party/libevent/event_tagging.c',
-            'base/third_party/libevent/evrpc.c',
-            'base/third_party/libevent/evutil.c',
-            'base/third_party/libevent/http.c',
-            'base/third_party/libevent/log.c',
-            'base/third_party/libevent/poll.c',
-            'base/third_party/libevent/select.c',
-            'base/third_party/libevent/signal.c',
-            'base/third_party/libevent/strlcpy.c',
-        ],
-        'tool': 'cc',
-        'include_dirs': [],
-        'cflags': cflags + ['-DHAVE_CONFIG_H'],
-    }
 
   if is_linux:
-    libs.extend(['-lrt', '-latomic', '-lnspr4'])
+    libs.extend(['-lrt', '-latomic', '-lnspr4', '-levent'])
     ldflags.extend(['-pthread'])
 
     static_libraries['xdg_user_dirs'] = {
@@ -600,13 +580,6 @@ def write_gn_ninja(path, root_gen_dir, options):
         'base/threading/platform_thread_linux.cc',
         'base/trace_event/malloc_dump_provider.cc',
     ])
-    static_libraries['libevent']['include_dirs'].extend([
-        os.path.join(SRC_ROOT, 'base', 'third_party', 'libevent', 'linux')
-    ])
-    static_libraries['libevent']['sources'].extend([
-        'base/third_party/libevent/epoll.c',
-    ])
-
 
   if is_mac:
     static_libraries['base']['sources'].extend([
@@ -634,12 +607,6 @@ def write_gn_ninja(path, root_gen_dir, options):
         'base/time/time_mac.cc',
         'base/threading/platform_thread_mac.mm',
         'base/trace_event/malloc_dump_provider.cc',
-    ])
-    static_libraries['libevent']['include_dirs'].extend([
-        os.path.join(SRC_ROOT, 'base', 'third_party', 'libevent', 'mac')
-    ])
-    static_libraries['libevent']['sources'].extend([
-        'base/third_party/libevent/kqueue.c',
     ])
 
     libs.extend([
