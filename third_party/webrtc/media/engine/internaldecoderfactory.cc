@@ -73,9 +73,6 @@ webrtc::VideoDecoder* InternalDecoderFactory::CreateVideoDecoder(
       return new NullVideoDecoder();
     case webrtc::kVideoCodecVP8:
       return webrtc::VP8Decoder::Create();
-    case webrtc::kVideoCodecVP9:
-      RTC_DCHECK(webrtc::VP9Decoder::IsSupported());
-      return webrtc::VP9Decoder::Create();
     default:
       LOG(LS_ERROR) << "Creating NullVideoDecoder for unsupported codec.";
       return new NullVideoDecoder();
