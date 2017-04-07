@@ -31,8 +31,6 @@ bool IsFlexfecFieldTrialEnabled() {
 
 InternalEncoderFactory::InternalEncoderFactory() {
   supported_codecs_.push_back(cricket::VideoCodec(kVp8CodecName));
-  if (webrtc::VP9Encoder::IsSupported())
-    supported_codecs_.push_back(cricket::VideoCodec(kVp9CodecName));
   if (webrtc::H264Encoder::IsSupported()) {
     cricket::VideoCodec codec(kH264CodecName);
     // TODO(magjed): Move setting these parameters into webrtc::H264Encoder
@@ -74,8 +72,6 @@ webrtc::VideoEncoder* InternalEncoderFactory::CreateVideoEncoder(
       return webrtc::H264Encoder::Create(codec);
     case webrtc::kVideoCodecVP8:
       return webrtc::VP8Encoder::Create();
-    case webrtc::kVideoCodecVP9:
-      return webrtc::VP9Encoder::Create();
     default:
       return nullptr;
   }
