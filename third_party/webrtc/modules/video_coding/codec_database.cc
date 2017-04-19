@@ -574,8 +574,6 @@ VCMGenericDecoder* VCMCodecDataBase::CreateDecoder(VideoCodecType type) const {
   switch (type) {
     case kVideoCodecVP8:
       return new VCMGenericDecoder(VP8Decoder::Create());
-    case kVideoCodecVP9:
-      return new VCMGenericDecoder(VP9Decoder::Create());
     case kVideoCodecI420:
       return new VCMGenericDecoder(new I420Decoder());
     case kVideoCodecH264:
