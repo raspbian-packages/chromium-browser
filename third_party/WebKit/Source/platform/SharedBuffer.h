@@ -1,0 +1,163 @@
+/*
+ * Copyright (C) 2006 Apple Computer, Inc.  All rights reserved.
+ * Copyright (C) Research In Motion Limited 2009-2010. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE COMPUTER, INC. ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE COMPUTER, INC. OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef SharedBuffer_h
+#define SharedBuffer_h
+
+#include "platform/PlatformExport.h"
+#include "platform/wtf/Forward.h"
+#include "platform/wtf/RefCounted.h"
+#include "platform/wtf/Vector.h"
+#include "platform/wtf/text/WTFString.h"
+#include "third_party/skia/include/core/SkData.h"
+
+namespace blink {
+
+class WebProcessMemoryDump;
+
+class PLATFORM_EXPORT SharedBuffer : public RefCounted<SharedBuffer> {
+ public:
+  enum : unsigned { kSegmentSize = 0x1000 };
+
+  static PassRefPtr<SharedBuffer> Create() {
+    return AdoptRef(new SharedBuffer);
+  }
+
+  HAS_STRICTLY_TYPED_ARG
+  static PassRefPtr<SharedBuffer> Create(STRICTLY_TYPED_ARG(size)) {
+    STRICT_ARG_TYPE(size_t);
+    return AdoptRef(new SharedBuffer(size));
+  }
+
+  HAS_STRICTLY_TYPED_ARG
+  static PassRefPtr<SharedBuffer> Create(const char* data,
+                                         STRICTLY_TYPED_ARG(size)) {
+    STRICT_ARG_TYPE(size_t);
+    return AdoptRef(new SharedBuffer(data, size));
+  }
+
+  HAS_STRICTLY_TYPED_ARG
+  static PassRefPtr<SharedBuffer> Create(const unsigned char* data,
+                                         STRICTLY_TYPED_ARG(size)) {
+    STRICT_ARG_TYPE(size_t);
+    return AdoptRef(new SharedBuffer(data, size));
+  }
+
+  static PassRefPtr<SharedBuffer> AdoptVector(Vector<char>&);
+
+  ~SharedBuffer();
+
+  // Calling this function will force internal segmented buffers to be merged
+  // into a flat buffer. Use getSomeData() whenever possible for better
+  // performance.
+  const char* Data() const;
+
+  size_t size() const;
+
+  bool IsEmpty() const { return !size(); }
+
+  void Append(PassRefPtr<SharedBuffer>);
+
+  HAS_STRICTLY_TYPED_ARG
+  void Append(const char* data, STRICTLY_TYPED_ARG(size)) {
+    ALLOW_NUMERIC_ARG_TYPES_PROMOTABLE_TO(size_t);
+    AppendInternal(data, size);
+  }
+  void Append(const Vector<char>&);
+
+  void Clear();
+
+  PassRefPtr<SharedBuffer> Copy() const;
+
+  // Return the number of consecutive bytes after "position". "data"
+  // points to the first byte.
+  // Return 0 when no more data left.
+  // When extracting all data with getSomeData(), the caller should
+  // repeat calling it until it returns 0.
+  // Usage:
+  //      const char* segment;
+  //      size_t pos = 0;
+  //      while (size_t length = sharedBuffer->getSomeData(segment, pos)) {
+  //          // Use the data. for example: decoder->decode(segment, length);
+  //          pos += length;
+  //      }
+  HAS_STRICTLY_TYPED_ARG
+  size_t GetSomeData(
+      const char*& data,
+      STRICTLY_TYPED_ARG(position) = static_cast<size_t>(0)) const {
+    STRICT_ARG_TYPE(size_t);
+    return GetSomeDataInternal(data, position);
+  }
+
+  // Returns the content data into "dest" as a flat buffer. "byteLength" must
+  // exactly match with size(). |dest| must not be null even if |bytesLength|
+  // is 0.
+  HAS_STRICTLY_TYPED_ARG
+  void GetAsBytes(void* dest, STRICTLY_TYPED_ARG(byte_length)) const {
+    STRICT_ARG_TYPE(size_t);
+    DCHECK_EQ(byte_length, size());
+    auto result = GetAsBytesInternal(dest, 0, byte_length);
+    DCHECK(result);
+  }
+
+  // Copies "byteLength" bytes from "position"-th bytes (0 origin) of the
+  // content data into "dest" as a flat buffer, Returns true on success,
+  // otherwise the content of "dest" is not guaranteed.
+  HAS_STRICTLY_TYPED_ARG
+  bool GetPartAsBytes(void* dest,
+                      STRICTLY_TYPED_ARG(position),
+                      STRICTLY_TYPED_ARG(byte_length)) const {
+    STRICT_ARG_TYPE(size_t);
+    return GetAsBytesInternal(dest, position, byte_length);
+  }
+
+  // Creates an SkData and copies this SharedBuffer's contents to that
+  // SkData without merging segmented buffers into a flat buffer.
+  sk_sp<SkData> GetAsSkData() const;
+
+  void OnMemoryDump(const String& dump_prefix, WebProcessMemoryDump*) const;
+
+ private:
+  SharedBuffer();
+  explicit SharedBuffer(size_t);
+  SharedBuffer(const char*, size_t);
+  SharedBuffer(const unsigned char*, size_t);
+
+  // See SharedBuffer::data().
+  void MergeSegmentsIntoBuffer() const;
+
+  void AppendInternal(const char* data, size_t);
+  bool GetAsBytesInternal(void* dest, size_t, size_t) const;
+  size_t GetSomeDataInternal(const char*& data, size_t position) const;
+
+  size_t size_;
+  mutable Vector<char> buffer_;
+  mutable Vector<char*> segments_;
+};
+
+}  // namespace blink
+
+#endif  // SharedBuffer_h

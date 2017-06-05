@@ -1,0 +1,16 @@
+// Copyright 2016 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// TODO(mgiuca): Link to full spec, rather than explainer, upon completion.
+// https://github.com/WICG/get-installed-related-apps/blob/master/EXPLAINER.md
+
+[
+    OriginTrialEnabled=InstalledApp,
+] partial interface Navigator {
+    // TODO(mgiuca): Add [SecureContext] to this method. Currently prevented due
+    // to clash with OriginTrialEnabled (so it is manually checked in the method
+    // installation code instead). This can be resolved either when
+    // OriginTrialEnabled is removed, or https://crbug.com/695123 is fixed.
+    [CallWith=ScriptState, Measure] Promise<RelatedApplication> getInstalledRelatedApps();
+};

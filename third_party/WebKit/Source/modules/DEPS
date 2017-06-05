@@ -1,0 +1,11 @@
+include_rules = [
+    "+bindings",
+    "+core",
+    "+modules",
+    "+platform",
+    "+public/platform",
+    "-web",
+
+    # Use platform/wtf/ now (see crbug.com/691465).
+    "-wtf/",
+]
