@@ -41,21 +41,6 @@ ExternalComponentLoader::~ExternalComponentLoader() {}
 
 void ExternalComponentLoader::StartLoading() {
   prefs_.reset(new base::DictionaryValue());
-#if defined(GOOGLE_CHROME_BUILD)
-  AddExternalExtension(extension_misc::kInAppPaymentsSupportAppId);
-#endif  // defined(GOOGLE_CHROME_BUILD)
-
-  if (HotwordServiceFactory::IsHotwordAllowed(profile_))
-    AddExternalExtension(extension_misc::kHotwordSharedModuleId);
-
-#if defined(OS_CHROMEOS)
-  {
-    base::CommandLine* const command_line =
-        base::CommandLine::ForCurrentProcess();
-    if (!command_line->HasSwitch(chromeos::switches::kDisableNewZIPUnpacker))
-      AddExternalExtension(extension_misc::kZIPUnpackerExtensionId);
-  }
-#endif
 
 #if defined(ENABLE_MEDIA_ROUTER)
   if (media_router::MediaRouterEnabled(profile_) &&
@@ -63,12 +48,6 @@ void ExternalComponentLoader::StartLoading() {
     AddExternalExtension(extension_misc::kMediaRouterStableExtensionId);
   }
 #endif  // defined(ENABLE_MEDIA_ROUTER)
-
-#if BUILDFLAG(ENABLE_APP_LIST) && defined(OS_CHROMEOS)
-  std::string google_now_extension_id;
-  if (GetGoogleNowExtensionId(&google_now_extension_id))
-    AddExternalExtension(google_now_extension_id);
-#endif
 
   LoadFinished();
 }
