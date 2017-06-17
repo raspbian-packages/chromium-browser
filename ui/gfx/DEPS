@@ -1,0 +1,10 @@
+include_rules = [
+  "+base",
+  "+cc/paint",
+  "+skia/ext",
+  "+third_party/harfbuzz-ng",
+  "+third_party/skia",
+  "+ui/ios",
+
+  "-testing/gmock",
+]

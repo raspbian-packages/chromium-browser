@@ -1,0 +1,34 @@
+{
+  "android.webkit.cts.WebViewTest": [
+    {
+      "name": "testPageScroll",
+      "_bug_id": "crbug.com/534643"
+    },
+    {
+      "name": "testJavascriptInterfaceForClientPopup",
+      "_bug_id": "crbug.com/698369"
+    },
+    {
+      "name": "testClearFormData",
+      "_bug_id": "crbug.com/711338"
+    }
+  ],
+  "android.webkit.cts.WebSettingsTest": [
+    {
+      "name": "testLocalImageLoads",
+      "_bug_id": "crbug.com/680759"
+    }
+  ],
+  "android.webkit.cts.WebViewClientTest": [
+    {
+      "name": "testShouldOverrideUrlLoadingOnCreateWindow",
+      "_bug_id": "crbug.com/659077"
+    }
+  ],
+  "android.webkit.cts.ServiceWorkerClientTest": [
+    {
+      "name": "testServiceWorkerClientInterceptCallback",
+      "_bug_id": "crbug.com/675809"
+    }
+  ]
+}

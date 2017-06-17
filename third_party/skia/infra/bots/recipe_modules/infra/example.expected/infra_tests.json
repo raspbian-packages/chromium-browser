@@ -1,0 +1,24 @@
+[
+  {
+    "cmd": [
+      "go",
+      "get",
+      "-u",
+      "-t",
+      "go.skia.org/infra/..."
+    ],
+    "env": {
+      "BUILDTYPE": "Release",
+      "CHROME_HEADLESS": "1",
+      "GOPATH": "[CUSTOM_/_B_WORK]/gopath",
+      "PATH": "%(PATH)s:RECIPE_PACKAGE_REPO[depot_tools]",
+      "SKIA_OUT": "[START_DIR]/out"
+    },
+    "name": "update go pkgs"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

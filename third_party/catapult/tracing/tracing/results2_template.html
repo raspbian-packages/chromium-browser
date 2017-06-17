@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!--
+Copyright 2016 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<link rel="import" href="/tracing/ui/base/base.html" data-suppress-import-order>
+
+<div id="loading">Loading framework...</div>
+
+<link rel="import" href="/tracing/value/histogram_importer.html">
+<link rel="import" href="/tracing/value/ui/histogram_set_view.html">
+
+<script>
+'use strict';
+(function() {
+  let importer = new tr.v.HistogramImporter(document.getElementById('loading'));
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const jsonEls = document.getElementsByTagName('histogram-json');
+
+    let p = importer.importHistograms(
+        jsonEls, document.getElementById('histograms'));
+
+    p.then(() => {
+      document.body.removeChild(jsonEls[0].parentNode);
+    });
+
+    // Free the objects and DOM referenced by the importer.
+    importer = undefined;
+  });
+})();
+</script>
+
+<tr-v-ui-histogram-set-view id="histograms" style="display: none;"></tr-v-ui-histogram-set-view>
