@@ -17,7 +17,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/trace_event/trace_event.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 #include <linux/types.h>
 
 struct local_dma_buf_sync {
