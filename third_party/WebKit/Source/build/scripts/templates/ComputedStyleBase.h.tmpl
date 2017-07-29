@@ -1,0 +1,205 @@
+{% from 'macros.tmpl' import license, print_if %}
+{% from 'fields/field.tmpl' import encode, getter_expression, setter_expression, declare_storage, fieldwise_compare, fieldwise_copy, fieldwise_diff, fieldwise_pointer_compare_inherited %}
+{% from 'fields/group.tmpl' import define_field_group_class %}
+{{license()}}
+
+#ifndef ComputedStyleBase_h
+#define ComputedStyleBase_h
+
+#include "core/style/ComputedStyleConstants.h"
+#include "core/CoreExport.h"
+#include "core/style/DataRef.h"
+#include "core/style/StyleDifference.h"
+#include "platform/wtf/SizeAssertions.h"
+#include "core/layout/LayoutTheme.h"
+{% for path in include_paths %}
+#include "{{path}}"
+{% endfor %}
+
+{# Each field template has macros that we can call to generate specific
+   aspects of the field (e.g. getters, setters).
+#}
+{% import 'fields/keyword.tmpl' as keyword %}
+{% import 'fields/primitive.tmpl' as primitive %}
+{% import 'fields/monotonic_flag.tmpl' as monotonic_flag %}
+{% import 'fields/storage_only.tmpl' as storage_only %}
+{% import 'fields/external.tmpl' as external %}
+{% from 'fields/field.tmpl' import encode %}
+{% set field_templates = {
+     'keyword': keyword,
+     'primitive': primitive,
+     'monotonic_flag': monotonic_flag,
+     'storage_only': storage_only, 
+     'external': external
+   } %}
+
+namespace blink {
+
+struct SameSizeAsComputedStyleBase {
+  {% if computed_style.subgroups is defined %}
+  void* dataRefs[{{computed_style.subgroups|length}}];
+  {% endif %}
+  {% for field in computed_style.fields|rejectattr("is_bit_field") %}
+  {{field.type_name}} {{field.name}};
+  {% endfor %}
+  unsigned m_bit_fields[{{computed_style.num_32_bit_words_for_bit_fields}}];
+};
+
+// The generated portion of ComputedStyle. For more info, see the header comment
+// in ComputedStyle.h.
+
+// ComputedStyleBase is a templated class to allow it to use functions
+// on ComputedStyle. This allows ComputedStyleBase to use hand written 
+// functions it would otherwise not know about.
+// It should only be templated with the ComputedStyle class and no other class
+// is allowed.
+template <class ComputedStyleFinal>
+class CORE_EXPORT ComputedStyleBase {
+ public:
+  inline bool IndependentInheritedEqual(const ComputedStyleBase& o) const {
+    return (
+        {{fieldwise_compare(computed_style, computed_style.all_fields
+            |selectattr("is_property")
+            |selectattr("is_inherited")
+            |selectattr("is_independent")
+            |list
+          )|indent(8)}}
+        true
+    );
+  }
+
+  inline bool NonIndependentInheritedEqual(const ComputedStyleBase& o) const {
+    return (
+        {{fieldwise_compare(computed_style, computed_style.all_fields
+            |selectattr("is_property")
+            |selectattr("is_inherited")
+            |rejectattr("is_independent")
+            |list
+          )|indent(8)}}
+        true
+    );
+  }
+
+  inline bool InheritedEqual(const ComputedStyleBase& o) const {
+    return IndependentInheritedEqual(o) && NonIndependentInheritedEqual(o);
+  }
+
+  inline bool NonInheritedEqual(const ComputedStyleBase& o) const {
+    return (
+        {{fieldwise_compare(computed_style, computed_style.all_fields
+            |selectattr("is_property")
+            |rejectattr("has_custom_compare_and_copy")
+            |rejectattr("is_inherited")
+            |list
+          )|indent(8)}}
+        true
+    );
+  }
+
+  inline bool InheritedDataShared(const ComputedStyleBase& o) const {
+    return (
+        {{fieldwise_pointer_compare_inherited(computed_style)|indent(8)}}
+        true
+    );
+  }
+
+  enum IsAtShadowBoundary {
+    kAtShadowBoundary,
+    kNotAtShadowBoundary,
+  };
+
+  void InheritFrom(const ComputedStyleBase& other,
+                                      IsAtShadowBoundary isAtShadowBoundary) {
+    {{fieldwise_copy(computed_style, computed_style.all_fields
+        |selectattr("is_property")
+        |selectattr("is_inherited")
+        |list
+      )|indent(4)}}
+  }
+
+  void CopyNonInheritedFromCached(
+      const ComputedStyleBase& other) {
+    {{fieldwise_copy(computed_style, computed_style.all_fields
+        |rejectattr("has_custom_compare_and_copy")
+        |rejectattr("is_inherited")
+        |list
+      )|indent(4)}}
+  }
+
+  // Copies the values of any independent inherited properties from the parent
+  // style that are marked as inherited by this style.
+  void PropagateIndependentInheritedProperties(
+      const ComputedStyleBase& parentStyle) {
+    {% for field in computed_style.all_fields if field.is_property and field.is_independent %}
+    if ({{field.is_inherited_method_name}}())
+      {{setter_expression(field)}} = parentStyle.{{getter_expression(field)}};
+    {% endfor %}
+  }
+
+  {% for name, groups_to_diff in diff_functions_map.items() %}
+  bool {{name}}(const ComputedStyleFinal& other) const {
+    const ComputedStyleFinal& self = static_cast<const ComputedStyleFinal&>(*this);
+    {{fieldwise_diff(groups_to_diff)|indent(4)}}
+    return false;
+  }
+  {% endfor %}
+
+  // Fields.
+  // TODO(sashab): Remove initialFoo() static methods and update callers to
+  // use resetFoo(), which can be more efficient.
+
+  {% for field in computed_style.all_fields|sort(attribute='name') %}
+  // {{field.property_name}}
+  {{field_templates[field.field_template].decl_public_methods(field)|indent(2)}}
+
+  {% endfor %}
+ private:
+  {% for subgroup in computed_style.subgroups %}
+  {{define_field_group_class(subgroup)|indent(2)}}
+
+  {% endfor %}
+
+ protected:
+  // Constructor and destructor are protected so that only the parent class ComputedStyle
+  // can instantiate this class.
+  ALWAYS_INLINE ComputedStyleBase() :
+  {% for field in computed_style.fields %}
+      {{field.name}}({{encode(field, field.default_value)}}){{print_if(not loop.last, ',')}}
+  {% endfor %}
+  {
+    static_assert(std::is_same<ComputedStyle, ComputedStyleFinal>::value, "ComputedStyleBase can only be templated with ComputedStyle");
+    {% for subgroup in computed_style.subgroups %}
+    {{subgroup.member_name}}.Init();
+    {% endfor %}
+  }
+
+  {% for field in computed_style.all_fields|sort(attribute='name') %}
+  {% if field.field_template in ('storage_only', 'monotonic_flag', 'external') %}
+  // {{field.property_name}}
+  {{field_templates[field.field_template].decl_protected_methods(field)|indent(2)}}
+
+  {% endif %}
+  {% endfor %}
+
+  ~ComputedStyleBase() = default;
+
+  // Storage.
+  {% for subgroup in computed_style.subgroups %}
+  DataRef<{{subgroup.type_name}}> {{subgroup.member_name}};
+  {% endfor %}
+
+  static unsigned WidthToFixedPoint(float width) {
+    DCHECK_GE(width, 0);
+    return static_cast<unsigned>(std::min<float>(width, kMaxForBorderWidth) *
+                                 kBorderWidthDenominator);
+  }
+
+ private:
+  {% for field in computed_style.fields %}
+  {{declare_storage(field)}}
+  {% endfor %}
+};
+
+} // namespace blink
+
+#endif // ComputedStyleBase_h

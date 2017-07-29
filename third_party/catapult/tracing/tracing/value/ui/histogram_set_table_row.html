@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!--
+Copyright 2016 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/tracing/value/ui/histogram_set_table_cell.html">
+<link rel="import" href="/tracing/value/ui/histogram_set_table_name_cell.html">
+
+<script>
+'use strict';
+tr.exportTo('tr.v.ui', function() {
+  class HistogramSetTableRow {
+    /**
+     * @param {!tr.v.HistogramSetHierarchy} hierarchy
+     * @param {!Element} baseTable tr-ui-b-table
+     * @param {!tr.v.ui.HistogramSetViewState} rootViewState
+     */
+    constructor(hierarchy, baseTable, rootViewState) {
+      this.hierarchy_ = hierarchy;
+      this.baseTable_ = baseTable;
+      this.rootViewState_ = rootViewState;
+      this.viewState_ = new tr.v.ui.HistogramSetTableRowState();
+      this.viewState_.addUpdateListener(this.onViewStateUpdate_.bind(this));
+
+      this.nameCell_ = undefined;
+      this.cells_ = new Map();
+      this.subRows_ = [];
+
+      // Don't assign viewState.subRows or cells. There can't be anything
+      // listening to viewState, so avoid the overhead of dispatching an event.
+      for (const subHierarchy of hierarchy.subRows) {
+        const subRow = new HistogramSetTableRow(
+            subHierarchy, baseTable, rootViewState);
+        this.subRows_.push(subRow);
+        this.viewState.subRows.set(subRow.name, subRow.viewState);
+      }
+      for (const columnName of this.columns.keys()) {
+        this.viewState.cells.set(
+            columnName, new tr.v.ui.HistogramSetTableCellState());
+      }
+    }
+
+    /**
+     * @return {string}
+     */
+    get name() {
+      return this.hierarchy_.name;
+    }
+
+    /**
+     * @return {number}
+     */
+    get depth() {
+      return this.hierarchy_.depth;
+    }
+
+    /**
+     * @return {string}
+     */
+    get description() {
+      return this.hierarchy_.description;
+    }
+
+    /**
+     * @return {!Map.<string, !(undefined|tr.v.Histogram|tr.v.HistogramSet)>}
+     */
+    get columns() {
+      return this.hierarchy_.columns;
+    }
+
+    /**
+     * @return {!tr.b.Range}
+     */
+    get overviewDataRange() {
+      return this.hierarchy_.overviewDataRange;
+    }
+
+    /**
+     * @return {!tr.v.ui.HistogramSetViewState}
+     */
+    get rootViewState() {
+      return this.rootViewState_;
+    }
+
+    /**
+     * @return {!Map.<string, !Element>} tr-v-ui-histogram-set-table-cell
+     */
+    get cells() {
+      return this.cells_;
+    }
+
+    /**
+     * @return {!Array.<tr.v.ui.HistogramSetTableRow>}
+     */
+    get subRows() {
+      return this.subRows_;
+    }
+
+    /**
+     * @return {!Array.<tr.v.ui.HistogramSetTableRowState>}
+     */
+    get viewState() {
+      return this.viewState_;
+    }
+
+    * walk() {
+      yield this;
+      for (const row of this.subRows) yield* row.walk();
+    }
+
+    static* walkAll(rootRows) {
+      for (const rootRow of rootRows) yield* rootRow.walk();
+    }
+
+    get nameCell() {
+      if (this.nameCell_ === undefined) {
+        this.nameCell_ = document.createElement(
+            'tr-v-ui-histogram-set-table-name-cell');
+        this.nameCell_.build(this);
+      }
+      return this.nameCell_;
+    }
+
+    getCell(columnName) {
+      if (this.cells.has(columnName)) return this.cells.get(columnName);
+      const cell = document.createElement('tr-v-ui-histogram-set-table-cell');
+      cell.build(this, columnName, this.viewState.cells.get(columnName));
+      this.cells.set(columnName, cell);
+      return cell;
+    }
+
+    compareNames(other) {
+      return this.name.localeCompare(other.name);
+    }
+
+    compareCells(other, displayLabel, referenceDisplayLabel) {
+      const cellA = this.columns.get(displayLabel);
+      const cellB = other.columns.get(displayLabel);
+      if (!(cellA instanceof tr.v.Histogram) ||
+          !(cellB instanceof tr.v.Histogram)) {
+        return undefined;
+      }
+
+      let referenceCellA;
+      let referenceCellB;
+
+      // If a reference column is selected, compare the absolute deltas
+      // between the two cells and their references.
+      if (referenceDisplayLabel &&
+          referenceDisplayLabel !== displayLabel) {
+        referenceCellA = this.columns.get(referenceDisplayLabel);
+        referenceCellB = other.columns.get(referenceDisplayLabel);
+      }
+
+      const statisticA = cellA.getAvailableStatisticName(
+          this.rootViewState.displayStatisticName, referenceCellA);
+      const statisticB = cellB.getAvailableStatisticName(
+          this.rootViewState.displayStatisticName, referenceCellB);
+      const valueA = cellA.getStatisticScalar(statisticA, referenceCellA).value;
+      const valueB = cellB.getStatisticScalar(statisticB, referenceCellB).value;
+
+      return valueA - valueB;
+    }
+
+    onViewStateUpdate_(event) {
+      if (event.delta.isExpanded) {
+        this.baseTable_.setExpandedForTableRow(this, this.viewState.isExpanded);
+      }
+
+      if (event.delta.subRows) {
+        throw new Error('HistogramSetTableRow.subRows must not be reassigned.');
+      }
+
+      if (event.delta.cells) {
+        // Only validate the cells that have already been built.
+        // Cells may not have been built yet, so only validate the cells that
+        // have been built.
+        for (const [displayLabel, cell] of this.cells) {
+          if (cell.viewState !== this.viewState.cells.get(displayLabel)) {
+            throw new Error('Only HistogramSetTableRow may update cells');
+          }
+        }
+      }
+    }
+
+    async restoreState(vs) {
+      // Don't use updateFromViewState() because it would overwrite cells and
+      // subRows, but we just want to restore them.
+      await this.viewState.update({
+        isExpanded: vs.isExpanded,
+        isOverviewed: vs.isOverviewed,
+      });
+
+      // If cells haven't been built yet, then their state will be restored when
+      // they are built.
+      for (const [displayLabel, cell] of this.cells) {
+        const previousState = vs.cells.get(displayLabel);
+        if (!previousState) continue;
+        await cell.viewState.updateFromViewState(previousState);
+      }
+      for (const row of this.subRows) {
+        const previousState = vs.subRows.get(row.name);
+        if (!previousState) continue;
+        await row.restoreState(previousState);
+      }
+    }
+  }
+
+  return {
+    HistogramSetTableRow,
+  };
+});
+</script>

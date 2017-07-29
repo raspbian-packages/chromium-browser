@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!--
+Copyright 2017 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/tracing/base/iteration_helpers.html">
+<link rel="import" href="/tracing/extras/chrome/estimated_input_latency.html">
+<link rel="import" href="/tracing/metrics/v8/utils.html">
+<link rel="import" href="/tracing/model/helpers/chrome_model_helper.html">
+<link rel="import" href="/tracing/value/histogram.html">
+
+<script>
+'use strict';
+
+/**
+ * @fileoverview
+ * This file defines the input latency metric estimated as the maximum
+ * expected queueing time (EQT) in sliding window of size 500ms.
+ *
+ * The EQT is defined as the average queueing time of a hypothetical input
+ * event arriving at a random time in the given time window.
+ * For more information see:
+ * - https://goo.gl/OQ2bX6
+ * - https://goo.gl/jmWpMl
+ * - https://goo.gl/lga4iO
+ */
+tr.exportTo('tr.metrics.sh', function() {
+  // The size of the sliding window is chosen arbitrarily (see
+  // https://goo.gl/lga4iO).
+  const WINDOW_SIZE_MS = 500;
+  const EQT_BOUNDARIES = tr.v.HistogramBinBoundaries
+      .createExponential(0.01, WINDOW_SIZE_MS, 50);
+  const V8_EVENT_NAMES_TO_FILTERS = new Map([
+    ['v8', fromPredicate_(tr.metrics.v8.utils.isV8Event)],
+    ['v8:compile', fromPredicate_(tr.metrics.v8.utils.isCompileEvent)],
+    [
+      'v8:compile:optimize',
+      fromPredicate_(tr.metrics.v8.utils.isCompileOptimizeEvent)
+    ],
+    [
+      'v8:compile:parse',
+      fromPredicate_(tr.metrics.v8.utils.isCompileParseEvent)
+    ],
+    [
+      'v8:compile:compile-unoptimize',
+      filterCompileUnoptimizeAndSubtractParseEvents_
+    ],
+    ['v8:execute', fromPredicate_(tr.metrics.v8.utils.isV8ExecuteEvent)],
+    ['v8:gc', fromPredicate_(tr.metrics.v8.utils.isGarbageCollectionEvent)],
+    [
+      'v8:gc:full-mark-compactor',
+      fromPredicate_(tr.metrics.v8.utils.isFullMarkCompactorEvent)
+    ],
+    [
+      'v8:gc:incremental-marking',
+      fromPredicate_(tr.metrics.v8.utils.isIncrementalMarkingEvent)
+    ],
+    [
+      'v8:gc:latency-mark-compactor',
+      fromPredicate_(tr.metrics.v8.utils.isLatencyMarkCompactorEvent)
+    ],
+    [
+      'v8:gc:memory-mark-compactor',
+      fromPredicate_(tr.metrics.v8.utils.isMemoryMarkCompactorEvent)
+    ],
+    ['v8:gc:scavenger', fromPredicate_(tr.metrics.v8.utils.isScavengerEvent)]
+  ]);
+
+  /**
+   * @param {function} function to filter sub slices withnin a slice.
+   * @returns {function} function to compute the duration corresponding to the
+   *     sub slices that satisfy the eventPredicate in a given slice.
+   */
+  function fromPredicate_(eventPredicate) {
+    return function(slice) {
+      const duration = durationOfTopmostSubSlices(slice, eventPredicate);
+      return {start: slice.start, end: slice.start + duration};
+    };
+  }
+
+  /**
+   * @param {!tr.model.Slice} The slice which has to be filtered.
+   * @returns {{start:number, end:number}} A range whose duration is the total
+   *     duration of the compile unoptimize events after subtracting the
+   *     duration of any parse events within the slice. The start of the slice
+   *     is same as the original slice.
+   */
+  function filterCompileUnoptimizeAndSubtractParseEvents_(slice) {
+    const duration = durationOfTopmostSubSlices(slice,
+        tr.metrics.v8.utils.isCompileUnoptimizeEvent,
+        tr.metrics.v8.utils.isCompileParseEvent);
+    return {start: slice.start, end: slice.start + duration};
+  }
+
+  /**
+   * Returns true if the slice contains a forced GC event. Some stories force
+   * garbage collection before sampling memory usage. Since a forced GC takes
+   * long time we need to ignore it to avoid biasing the input latency results.
+   */
+  function containsForcedGC_(slice) {
+    return slice.findTopmostSlicesRelativeToThisSlice(
+        tr.metrics.v8.utils.isForcedGarbageCollectionEvent).length > 0;
+  }
+
+  /**
+   * @param {string} name Name of the histogram.
+   * @param {string} description Description of the histogram.
+   * @returns {!tr.v.Histogram}
+   */
+  function createHistogramForEQT_(name, description) {
+    const histogram = new tr.v.Histogram(name,
+        tr.b.Unit.byName.timeDurationInMs_smallerIsBetter, EQT_BOUNDARIES);
+    histogram.customizeSummaryOptions({
+      avg: false,
+      count: false,
+      max: true,
+      min: false,
+      std: false,
+      sum: false,
+    });
+    histogram.description = description;
+    return histogram;
+  }
+
+  /**
+   * Computes the maximum expected queueing time in the sliding time window
+   * of size 500ms (WINDOW_SIZE_MS). The function produces two Histograms:
+   * - total:500ms_window:renderer_eqt,
+   * - interactive:500ms_window:renderer_eqt.
+   * The former is the metric computed for the whole trace. The latter is
+   * the metric computed for the tme while the page is interactive.
+   * Each renderer process adds one sample to the histograms.
+   */
+  function expectedQueueingTimeMetric(histograms, model) {
+    const chromeHelper = model.getOrCreateHelper(
+        tr.model.helpers.ChromeModelHelper);
+    const totalHistogram = createHistogramForEQT_(
+        `total:${WINDOW_SIZE_MS}ms_window:renderer_eqt`,
+        `The maximum EQT in a ${WINDOW_SIZE_MS}ms sliding window` +
+        ' for a given renderer');
+    const interactiveHistogram = createHistogramForEQT_(
+        `interactive:${WINDOW_SIZE_MS}ms_window:renderer_eqt`,
+        `The maximum EQT in a ${WINDOW_SIZE_MS}ms sliding window` +
+        ' for a given renderer while the page is interactive');
+    const rendererHelpers = Object.values(chromeHelper.rendererHelpers);
+    const rendererToInteractiveTimestamps =
+        tr.e.chrome.getInteractiveTimestamps(model);
+    for (const rendererHelper of rendererHelpers) {
+      if (rendererHelper.isChromeTracingUI) continue;
+      const tasks = rendererHelper.mainThread.sliceGroup.topLevelSlices
+          .filter(slice => slice.duration > 0 && !containsForcedGC_(slice))
+          .map(slice => {return {start: slice.start, end: slice.end};});
+      totalHistogram.addSample(
+          tr.e.chrome.maxExpectedQueueingTimeInSlidingWindow(
+              rendererHelper.mainThread.bounds.min,
+              rendererHelper.mainThread.bounds.max,
+              WINDOW_SIZE_MS, tasks));
+      const interactiveTimestamps =
+        rendererToInteractiveTimestamps.get(rendererHelper.pid);
+      if (interactiveTimestamps.length === 0) continue;
+      if (interactiveTimestamps.length > 1) {
+        // TODO(ulan): Support multiple interactive time windows when
+        // https://crbug.com/692112 is fixed.
+        continue;
+      }
+      const interactiveWindow =
+          tr.b.math.Range.fromExplicitRange(interactiveTimestamps[0], Infinity)
+          .findIntersection(rendererHelper.mainThread.bounds);
+      interactiveHistogram.addSample(
+          tr.e.chrome.maxExpectedQueueingTimeInSlidingWindow(
+              interactiveWindow.min, interactiveWindow.max,
+              WINDOW_SIZE_MS, tasks));
+    }
+    addV8ContributionToExpectedQueueingTime(
+        totalHistogram, interactiveHistogram, rendererToInteractiveTimestamps,
+        histograms, model);
+    histograms.addHistogram(totalHistogram);
+    histograms.addHistogram(interactiveHistogram);
+  }
+
+  /**
+   * Adds v8 related diagnostic histograms for the total and interactive EQT
+   * of the renderer.
+   * Sample histograms:
+   * - total:500ms_window:renderer_eqt:v8,
+   * - total:500ms_window:renderer_eqt:v8:gc,
+   * - interactive:500ms_window:renderer_eqt:v8:gc:scavenger,
+   * - interactive:500ms_window:renderer_eqt:v8:compile.
+   * @param totalEqtHistogram the main total EQT histogram.
+   * @param interactiveEqtHistogram the main interactive EQT histogram.
+   * @param rendererToInteractiveTimestamps a map from renderer pid to an array
+   *     of interactive timestamps.
+   */
+  function addV8ContributionToExpectedQueueingTime(
+      totalEqtHistogram, interactiveEqtHistogram,
+      rendererToInteractiveTimestamps, histograms, model) {
+    if (!model.categories.includes('v8')) return;
+    const breakdownForTotal = new tr.v.d.RelatedHistogramMap();
+    const breakdownForInteractive = new tr.v.d.RelatedHistogramMap();
+    for (const [eventName, filterFunction] of V8_EVENT_NAMES_TO_FILTERS) {
+      const contribution = contributionToExpectedQueueingTime(
+          filterFunction, eventName, rendererToInteractiveTimestamps,
+          histograms, model);
+      breakdownForTotal.set(eventName, contribution.total);
+      breakdownForInteractive.set(eventName, contribution.interactive);
+    }
+    totalEqtHistogram.diagnostics.set('v8', breakdownForTotal);
+    interactiveEqtHistogram.diagnostics.set('v8', breakdownForInteractive);
+  }
+
+  /**
+   * @returns {number} the total duration of topmost subslices of the given
+   *     slice that satisfy the given predicate after filtering out any
+         events that satisfy the subEventPredicate in the subslices.
+   */
+  function durationOfTopmostSubSlices(slice, predicate, subEventPredicate) {
+    let duration = 0;
+    for (const sub of slice.findTopmostSlicesRelativeToThisSlice(predicate)) {
+      duration += sub.duration;
+      if (subEventPredicate !== null && subEventPredicate !== undefined) {
+        duration -= durationOfTopmostSubSlices(sub, subEventPredicate);
+      }
+    }
+    return duration;
+  }
+
+  /**
+   * Computes the contribution of the selected events to the expected queueing
+   * time. We define the contribution as the maximum expected queueing time in
+   * the sliding time window of size 500ms (WINDOW_SIZE_MS) for the trace that
+   * is modified as follows:
+   * - from each top-level task remove all subevents except the selected events.
+   * - removing subevents shrinks a task by shifting its end time closer to
+   *   the start time. The start time does not change.
+   *
+   * Similar to the expectedQueueingTime this function computes two histograms:
+   * total and interactive. For example:
+   * - total:500ms_window:renderer_eqt:v8,
+   * - interactive:500ms_window:renderer_eqt:v8.
+   * Each renderer process adds one sample to the histograms.
+   * Both histograms are added to the given histogram set.
+   *
+   * @param filterFunction a function to compute the duration of the sub
+   *     slices satisfying a particular predicate within the given slice.
+   * @param eventName the name describing the selected events. This name will be
+   *     added to metric names.
+   * @param rendererToInteractiveTimestamps a map from renderer pid to an array
+   *     of interactive timestamps.
+   * @returns {{total: !tr.v.Histogram, interactive: !tr.v.Histogram}}
+   */
+  function contributionToExpectedQueueingTime(
+      filterFunction, eventName, rendererToInteractiveTimestamps, histograms,
+      model) {
+    const chromeHelper = model.getOrCreateHelper(
+        tr.model.helpers.ChromeModelHelper);
+    const totalHistogram = createHistogramForEQT_(
+        `total:${WINDOW_SIZE_MS}ms_window:renderer_eqt:${eventName}`,
+        `Contribution to the expected queueing time by ${eventName}` +
+        ' for a given renderer. It is computed as the maximum EQT in' +
+        ` a ${WINDOW_SIZE_MS}ms sliding window after shrinking top-level` +
+        ` tasks to contain only ${eventName} subevents`);
+    const interactiveHistogram = createHistogramForEQT_(
+        `interactive:${WINDOW_SIZE_MS}ms_window:renderer_eqt:${eventName}`,
+        `Contribution to the expected queueing time by ${eventName}` +
+        ' for a given renderer while the page is interactive. It is computed' +
+        ` as the maximum EQT in a ${WINDOW_SIZE_MS}ms sliding window after` +
+        ` shrinking top-level tasks to contain only ${eventName} subevents`);
+    const rendererHelpers = Object.values(chromeHelper.rendererHelpers);
+    for (const rendererHelper of rendererHelpers) {
+      if (rendererHelper.isChromeTracingUI) continue;
+      const tasks = rendererHelper.mainThread.sliceGroup.topLevelSlices
+          .filter(slice => slice.duration > 0 && !containsForcedGC_(slice))
+          .map(filterFunction);
+      totalHistogram.addSample(
+          tr.e.chrome.maxExpectedQueueingTimeInSlidingWindow(
+              rendererHelper.mainThread.bounds.min,
+              rendererHelper.mainThread.bounds.max,
+              WINDOW_SIZE_MS, tasks));
+      const interactiveTimestamps =
+          rendererToInteractiveTimestamps.get(rendererHelper.pid);
+      if (interactiveTimestamps.length === 0) continue;
+      if (interactiveTimestamps.length > 1) {
+        // TODO(ulan): Support multiple interactive time windows when
+        // https://crbug.com/692112 is fixed.
+        continue;
+      }
+      const interactiveWindow =
+          tr.b.math.Range.fromExplicitRange(interactiveTimestamps[0], Infinity)
+          .findIntersection(rendererHelper.mainThread.bounds);
+      interactiveHistogram.addSample(
+          tr.e.chrome.maxExpectedQueueingTimeInSlidingWindow(
+              interactiveWindow.min, interactiveWindow.max,
+              WINDOW_SIZE_MS, tasks));
+    }
+    histograms.addHistogram(totalHistogram);
+    histograms.addHistogram(interactiveHistogram);
+    return {
+      total: totalHistogram,
+      interactive: interactiveHistogram
+    };
+  }
+
+  tr.metrics.MetricRegistry.register(expectedQueueingTimeMetric);
+
+  return {
+    expectedQueueingTimeMetric,
+    contributionToExpectedQueueingTime,
+  };
+});
+</script>
