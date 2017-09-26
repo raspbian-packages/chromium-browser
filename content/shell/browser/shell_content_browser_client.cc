@@ -39,7 +39,6 @@
 #include "content/shell/common/shell_messages.h"
 #include "content/shell/common/shell_switches.h"
 #include "content/shell/grit/shell_resources.h"
-#include "content/test/data/mojo_layouttest_test.mojom.h"
 #include "media/mojo/features.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "net/ssl/client_cert_identity.h"
@@ -128,26 +127,6 @@ int GetCrashSignalFD(const base::CommandLine& command_line) {
 }
 #endif  // defined(OS_POSIX) && !defined(OS_MACOSX) && !defined(OS_ANDROID)
 
-class MojoLayoutTestHelper : public mojom::MojoLayoutTestHelper {
- public:
-  MojoLayoutTestHelper() {}
-  ~MojoLayoutTestHelper() override {}
-
-  // mojom::MojoLayoutTestHelper:
-  void Reverse(const std::string& message, ReverseCallback callback) override {
-    std::move(callback).Run(std::string(message.rbegin(), message.rend()));
-  }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(MojoLayoutTestHelper);
-};
-
-void BindLayoutTestHelper(mojom::MojoLayoutTestHelperRequest request,
-                          RenderFrameHost* render_frame_host) {
-  mojo::MakeStrongBinding(base::MakeUnique<MojoLayoutTestHelper>(),
-                          std::move(request));
-}
-
 }  // namespace
 
 ShellContentBrowserClient* ShellContentBrowserClient::Get() {
@@ -162,7 +141,6 @@ ShellContentBrowserClient::ShellContentBrowserClient()
     : shell_browser_main_parts_(NULL) {
   DCHECK(!g_browser_client);
   g_browser_client = this;
-  frame_interfaces_.AddInterface(base::Bind(&BindLayoutTestHelper));
 }
 
 ShellContentBrowserClient::~ShellContentBrowserClient() {
