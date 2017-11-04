@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--
+Copyright 2017 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/components/app-route/app-route.html">
+
+<link rel="import" href="/dashboard/pinpoint/elements/base-style.html">
+<link rel="import" href="/dashboard/pinpoint/elements/jobs-table.html">
+<link rel="import" href="/dashboard/pinpoint/elements/loading-wrapper.html">
+
+<dom-module id="jobs-page">
+  <template>
+    <style include="base-style">
+      #job-count {
+        background: var(--paper-indigo-50);
+      }
+    </style>
+
+    <app-route route="{{route}}" pattern="/:sortBy:sortDescending" query-params="{{queryParams}}"></app-route>
+
+    <h1>
+      Jobs
+      <span id="job-count" class="chip">
+        [[computeJobCountString(jobCount, jobCountMax)]]
+      </span>
+    </h1>
+    <loading-wrapper id="loader">
+      <jobs-table id="jobs-table"
+          jobs="[[jobs]]"
+          sort-by="[[queryParams.sortBy]]"
+          sort-descending="[[queryParams.sortDescending]]">
+      </jobs-table>
+    </loading-wrapper>
+  </template>
+
+  <script>
+    'use strict';
+    Polymer({
+      is: 'jobs-page',
+
+      properties: {
+        jobCount: {
+          type: Number,
+          value: 0
+        },
+
+        jobCountMax: {
+          type: Number
+        },
+
+        jobs: {
+          type: Array,
+          value: () => []
+        }
+      },
+
+      computeJobCountString(jobCount, jobCountMax) {
+        if (jobCount >= jobCountMax) {
+          return String(jobCountMax) + '+';
+        }
+        return String(jobCount);
+      },
+
+      deselected() {
+        this.jobs = [];
+      },
+
+      async selected() {
+        const response = await this.$.loader.load('/api/jobs', {});
+        if (response) {
+          this.jobs = response.jobs_list;
+          this.jobCount = response.jobs_count;
+          this.jobCountMax = response.jobs_count_max;
+        }
+      }
+    });
+  </script>
+</dom-module>
