@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!--
+Copyright 2017 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+
+<link rel="import" href="/components/iron-icons/iron-icons.html">
+
+<link rel="import" href="/dashboard/static/simple_xhr.html">
+
+<dom-module id="navigation-bar">
+  <template>
+    <style>
+      nav {
+        background-color: var(--paper-indigo-500);
+        display: flex;
+        font-weight: bold;
+        width: 100%;
+      }
+
+      nav a:last-child {
+          margin-left: auto;
+      }
+
+      a {
+        color: var(--paper-indigo-50);
+        padding: 0.8em;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: white;
+      }
+    </style>
+
+    <nav id="navbar">
+      <a href="/">Pinpoint</a>
+      <a href="/new">New job</a>
+      <a href="https://github.com/catapult-project/catapult/tree/master/dashboard/dashboard/pinpoint" target="_blank">Documentation</a>
+      <a href$="[[loginUrl]]" title="Switch user">[[displayUsername]]</a>
+    </nav>
+  </template>
+
+  <script>
+    'use strict';
+    Polymer({
+      is: 'navigation-bar',
+
+      ready() {
+        simple_xhr.send('/api/login',
+                        {'path': location.pathname + location.search},
+            function(response) {
+              this.loginUrl = response.login_url;
+              if ('display_username' in response) {
+                this.displayUsername = response.display_username;
+              } else {
+                this.displayUsername = 'Sign in';
+              }
+            }.bind(this));
+      }
+    });
+  </script>
+</dom-module>
