@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "base/third_party/libevent/event.h"
+#include <event.h>
 #include "webrtc/rtc_base/checks.h"
 #include "webrtc/rtc_base/logging.h"
 #include "webrtc/rtc_base/platform_thread.h"
