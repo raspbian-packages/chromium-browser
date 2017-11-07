@@ -66,6 +66,7 @@
 
 #if GTK_MAJOR_VERSION == 2
 #include "chrome/browser/ui/libgtkui/native_theme_gtk2.h"  // nogncheck
+#include "chrome/browser/ui/libgtkui/nav_button_layout_manager.h"
 #elif GTK_MAJOR_VERSION == 3
 #include "chrome/browser/ui/libgtkui/native_theme_gtk3.h"  // nogncheck
 #include "chrome/browser/ui/libgtkui/nav_button_layout_manager_gtk3.h"  // nogncheck
