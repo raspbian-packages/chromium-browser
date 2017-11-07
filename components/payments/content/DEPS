@@ -1,0 +1,15 @@
+include_rules = [
+  "-components/payments/content/android",
+  "-components/payments/content/utility",
+  "+components/autofill",
+  "+components/keyed_service/content",
+  "+components/prefs",
+  "+components/strings",
+  "+components/url_formatter",
+  "+content/public",
+  "+mojo/public/cpp",
+  "+net",
+  "+third_party/WebKit/public/platform/modules/payments",
+  "+third_party/libphonenumber",
+  "+ui/base",
+]
