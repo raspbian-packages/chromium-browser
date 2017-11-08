@@ -1,0 +1,85 @@
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module blink.mojom;
+
+import "third_party/WebKit/public/platform/modules/fetch/fetch_api_request.mojom";
+import "url/mojo/origin.mojom";
+
+enum BackgroundFetchError {
+  NONE,
+  DUPLICATED_ID,
+  INVALID_ARGUMENT,
+  INVALID_ID,
+  STORAGE_ERROR
+};
+
+// Represents the definition of an icon developers can optionally provide with a
+// Background Fetch fetch. Analogous to the following structure in the spec:
+// https://wicg.github.io/background-fetch/#background-fetch-manager
+struct IconDefinition {
+  string src;
+  string sizes;
+  string type;
+};
+
+// Represents the optional options a developer can provide when starting a new
+// Background Fetch fetch. Analogous to the following structure in the spec:
+// https://wicg.github.io/background-fetch/#background-fetch-manager
+struct BackgroundFetchOptions {
+  array<IconDefinition> icons;
+  int64 total_download_size;
+  string title;
+};
+
+// Represents the information associated with a Background Fetch registration.
+// Analogous to the following structure in the spec:
+// https://wicg.github.io/background-fetch/#background-fetch-registration
+struct BackgroundFetchRegistration {
+  string id;
+  array<IconDefinition> icons;
+  int64 total_download_size;
+  string title;
+};
+
+interface BackgroundFetchService {
+  // Creates a new Background Fetch registration identified by |id| with the
+  // given |options| for the sequence of |requests|.
+  Fetch(int64 service_worker_registration_id,
+        url.mojom.Origin origin,
+        string id,
+        array<FetchAPIRequest> requests,
+        BackgroundFetchOptions options)
+      => (BackgroundFetchError error,
+          BackgroundFetchRegistration? registration);
+
+  // Updates the user interface for the Background Fetch identified by the
+  // |service_worker_registration_id| and the |id|.
+  UpdateUI(int64 service_worker_registration_id,
+           url.mojom.Origin origin,
+           string id,
+           string title)
+      => (BackgroundFetchError error);
+
+  // Aborts the Background Fetch registration identified by the
+  // |service_worker_registration_id| and the |id|.
+  Abort(int64 service_worker_registration_id,
+        url.mojom.Origin origin,
+        string id)
+      => (BackgroundFetchError error);
+
+  // Gets the Background Fetch registration identified by the
+  // |service_worker_registration_id| and the |id|.
+  GetRegistration(int64 service_worker_registration_id,
+                  url.mojom.Origin origin,
+                  string id)
+      => (BackgroundFetchError error,
+          BackgroundFetchRegistration? registration);
+
+  // Gets the sequence of ids for active Background Fetch registrations given
+  // the |service_worker_registration_id|.
+  GetIds(int64 service_worker_registration_id, url.mojom.Origin origin)
+      => (BackgroundFetchError error,
+          array<string> ids);
+};
