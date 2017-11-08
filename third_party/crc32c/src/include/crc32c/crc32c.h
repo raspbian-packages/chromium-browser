@@ -37,7 +37,7 @@ inline uint32_t Crc32c(const std::string& string) {
 #if __has_include(<string_view>)
 // Visual Studio provides a <string_view> header even in C++11 mode. When
 // included, the header issues an #error. (C1189)
-#if !defined(_MSC_VER) || __cplusplus >= 201703L
+#if !defined(_MSC_VER) && __cplusplus >= 201703L
 #include <string_view>
 
 // Comptues the CRC32C of the bytes in the string_view.
