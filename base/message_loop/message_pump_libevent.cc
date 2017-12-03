@@ -14,7 +14,7 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/posix/eintr_wrapper.h"
-#include "base/third_party/libevent/event.h"
+#include <event.h>
 #include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
