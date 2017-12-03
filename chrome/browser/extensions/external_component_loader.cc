@@ -34,22 +34,6 @@ ExternalComponentLoader::~ExternalComponentLoader() {}
 
 void ExternalComponentLoader::StartLoading() {
   auto prefs = std::make_unique<base::DictionaryValue>();
-#if defined(GOOGLE_CHROME_BUILD)
-  AddExternalExtension(extension_misc::kInAppPaymentsSupportAppId, prefs.get());
-#endif  // defined(GOOGLE_CHROME_BUILD)
-
-  if (HotwordServiceFactory::IsHotwordAllowed(profile_))
-    AddExternalExtension(extension_misc::kHotwordSharedModuleId, prefs.get());
-
-#if defined(OS_CHROMEOS)
-  {
-    base::CommandLine* const command_line =
-        base::CommandLine::ForCurrentProcess();
-    if (!command_line->HasSwitch(chromeos::switches::kDisableNewZIPUnpacker))
-      AddExternalExtension(extension_misc::kZIPUnpackerExtensionId,
-                           prefs.get());
-  }
-#endif
 
   if (media_router::MediaRouterEnabled(profile_) &&
       FeatureSwitch::load_media_router_component_extension()->IsEnabled()) {
