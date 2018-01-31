@@ -590,7 +590,7 @@ if (is_android) {
           [ "//third_party/crashpad/crashpad/handler:crashpad_handler" ]
     }
 
-    if (is_linux) {
+    if (false) {
       data_deps += [ "//third_party/content_shell_fonts" ]
     }
 
