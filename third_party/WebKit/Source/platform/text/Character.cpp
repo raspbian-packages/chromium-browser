@@ -227,8 +227,6 @@ bool Character::CanTextDecorationSkipInk(UChar32 codepoint) {
     case UBLOCK_HANGUL_JAMO_EXTENDED_A:
     case UBLOCK_HANGUL_JAMO_EXTENDED_B:
     case UBLOCK_LINEAR_B_IDEOGRAMS:
-    case UBLOCK_TANGUT:
-    case UBLOCK_TANGUT_COMPONENTS:
       return false;
     default:
       return true;
