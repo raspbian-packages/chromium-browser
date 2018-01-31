@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "base/third_party/libevent/event.h"
+#include <event.h>
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/numerics/safe_conversions.h"
