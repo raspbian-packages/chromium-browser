@@ -236,7 +236,7 @@ class TType
     {
     }
 
-    TBasicType getBasicType() const { return type; }
+    constexpr TBasicType getBasicType() const { return type; }
     void setBasicType(TBasicType t);
 
     TPrecision getPrecision() const { return precision; }
