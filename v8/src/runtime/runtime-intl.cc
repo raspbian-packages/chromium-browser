@@ -627,7 +627,11 @@ RUNTIME_FUNCTION(Runtime_PluralRulesSelect) {
   return *isolate->factory()
               ->NewStringFromTwoByte(Vector<const uint16_t>(
                   reinterpret_cast<const uint16_t*>(
+#if U_ICU_VERSION_MAJOR_NUM >= 59
                       icu::toUCharPtr(result.getBuffer())),
+#else
+                      result.getBuffer()),
+#endif
                   result.length()))
               .ToHandleChecked();
 }
