@@ -411,7 +411,7 @@ void AXEventGenerator::FireRelationSourceEvents(AXTree* tree,
         return;
 
       source_nodes.insert(source_node);
-      AddEvent(source_node, Event::RELATED_NODE_CHANGED);
+      this->AddEvent(source_node, Event::RELATED_NODE_CHANGED);
     });
   };
 
