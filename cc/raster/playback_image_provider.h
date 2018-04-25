@@ -20,7 +20,6 @@ class CC_EXPORT PlaybackImageProvider : public ImageProvider {
  public:
   struct CC_EXPORT Settings {
     Settings();
-    Settings(const Settings& other);
     ~Settings();
 
     // The set of image ids to skip during raster.
