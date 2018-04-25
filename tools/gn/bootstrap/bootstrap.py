@@ -555,7 +555,6 @@ def write_gn_ninja(path, root_gen_dir, options):
       'base/third_party/dmg_fp/dtoa_wrapper.cc',
       'base/third_party/dmg_fp/g_fmt.cc',
       'base/third_party/icu/icu_utf.cc',
-      'base/third_party/nspr/prtime.cc',
       'base/threading/post_task_and_reply_impl.cc',
       'base/threading/scoped_blocking_call.cc',
       'base/threading/sequence_local_storage_map.cc',
@@ -697,7 +696,7 @@ def write_gn_ninja(path, root_gen_dir, options):
         'base/allocator/allocator_shim.cc',
         'base/allocator/allocator_shim_default_dispatch_to_glibc.cc',
       ])
-      libs.extend(['-lrt', '-latomic'])
+      libs.extend(['-lrt', '-latomic', '-lnspr4'])
       static_libraries['libevent']['include_dirs'].extend([
           os.path.join(SRC_ROOT, 'base', 'third_party', 'libevent', 'linux')
       ])
