@@ -16,8 +16,8 @@
 // backwards compatibility for legacy applications using the library.
 #define VPX_CODEC_DISABLE_COMPAT 1
 extern "C" {
-#include "third_party/libvpx/source/libvpx/vpx/vp8dx.h"      // nogncheck
-#include "third_party/libvpx/source/libvpx/vpx/vpx_codec.h"  // nogncheck
+#include <vpx/vp8dx.h>
+#include <vpx/vpx_codec.h>
 }
 #endif
 
@@ -106,7 +106,7 @@ bool IsColorSpaceSupported(const media::VideoColorSpace& color_space) {
 }
 
 bool IsVp9ProfileSupported(VideoCodecProfile profile) {
-#if BUILDFLAG(ENABLE_LIBVPX)
+#if 0
   // High bit depth capabilities may be toggled via LibVPX config flags.
   static bool vpx_supports_high_bit_depth =
       (vpx_codec_get_caps(vpx_codec_vp9_dx()) & VPX_CODEC_CAP_HIGHBITDEPTH) !=
