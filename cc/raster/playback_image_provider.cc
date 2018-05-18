@@ -70,7 +70,6 @@ PlaybackImageProvider::GetDecodedDrawImage(const DrawImage& draw_image) {
 }
 
 PlaybackImageProvider::Settings::Settings() = default;
-PlaybackImageProvider::Settings::Settings(const Settings& other) = default;
 PlaybackImageProvider::Settings::~Settings() = default;
 
 }  // namespace cc
