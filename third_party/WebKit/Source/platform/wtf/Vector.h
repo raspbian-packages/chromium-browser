@@ -1995,6 +1995,13 @@ Vector<T, inlineCapacity, Allocator>::Trace(VisitorDispatcher visitor) {
 
 }  // namespace WTF
 
+#include "base/template_util.h"
+
+namespace base {
+template <typename T>
+struct is_trivially_copy_constructible<WTF::Vector<T>> : std::false_type {};
+}
+
 using WTF::Vector;
 
 #endif  // WTF_Vector_h
