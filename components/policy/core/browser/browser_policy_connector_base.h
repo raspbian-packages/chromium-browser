@@ -14,10 +14,10 @@
 #include "components/policy/core/common/schema.h"
 #include "components/policy/core/common/schema_registry.h"
 #include "components/policy/policy_export.h"
+#include "components/policy/core/common/configuration_policy_provider.h"
 
 namespace policy {
 
-class ConfigurationPolicyProvider;
 class PolicyService;
 class PolicyServiceImpl;
 
