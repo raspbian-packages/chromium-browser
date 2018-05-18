@@ -94,7 +94,7 @@ bool AvatarMenu::ShouldShowAvatarMenu() {
   // TODO: Eliminate this ifdef. Add a delegate interface for the menu which
   // would also help remove the Browser dependency in AvatarMenuActions
   // implementations.
-#if defined(OS_CHROMEOS)
+#if 1
   // On ChromeOS the menu will not be shown.
   return false;
 #else
