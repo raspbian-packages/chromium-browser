@@ -27,12 +27,12 @@
 #include "extensions/common/url_pattern_set.h"
 #include "url/url_constants.h"
 
+namespace keys = extensions::manifest_keys;
+namespace errors = extensions::manifest_errors;
+
 namespace extensions {
 
 namespace {
-
-namespace keys = manifest_keys;
-namespace errors = manifest_errors;
 
 struct ManifestPermissions : public Extension::ManifestData {
   ManifestPermissions(std::unique_ptr<const PermissionSet> permissions);

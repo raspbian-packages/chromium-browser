@@ -22,11 +22,11 @@
 #include "extensions/common/permissions/permission_set.h"
 #include "extensions/common/permissions/permissions_data.h"
 
-namespace extensions {
+namespace keys = extensions::manifest_keys;
+namespace values = extensions::manifest_values;
+namespace errors = extensions::manifest_errors;
 
-namespace keys = manifest_keys;
-namespace values = manifest_values;
-namespace errors = manifest_errors;
+namespace extensions {
 
 namespace {
 

@@ -17,12 +17,12 @@
 #include "extensions/common/manifest_constants.h"
 #include "extensions/common/url_pattern.h"
 
+namespace keys = extensions::manifest_keys;
+namespace errors = extensions::manifest_errors;
+
 namespace extensions {
 
 namespace {
-
-namespace keys = extensions::manifest_keys;
-namespace errors = manifest_errors;
 
 const char kDefaultSandboxedPageContentSecurityPolicy[] =
     "sandbox allow-scripts allow-forms allow-popups allow-modals; "
