@@ -61,14 +61,14 @@ static void StringAppendVT(StringType* dst,
   int result = vsnprintfT(stack_buf, arraysize(stack_buf), format, ap_copy);
   va_end(ap_copy);
 
-  if (result >= 0 && result < static_cast<int>(arraysize(stack_buf))) {
+  int mem_length = static_cast<int>(arraysize(stack_buf));
+  if (result >= 0 && result < mem_length) {
     // It fit.
     dst->append(stack_buf, result);
     return;
   }
 
   // Repeatedly increase buffer size until it fits.
-  int mem_length = arraysize(stack_buf);
   while (true) {
     if (result < 0) {
 #if defined(OS_WIN)
