@@ -43,8 +43,8 @@ SettingsProviderGSettings::SettingsProviderGSettings(GtkUi* delegate)
   const gchar* settings_schema =
       base::nix::GetDesktopEnvironment(env.get()) ==
               base::nix::DESKTOP_ENVIRONMENT_CINNAMON
-          ? settings_schema = kCinnamonPreferencesSchema
-          : settings_schema = kGnomePreferencesSchema;
+          ? kCinnamonPreferencesSchema
+          : kGnomePreferencesSchema;
 
   if (!g_settings_schema_source_lookup(g_settings_schema_source_get_default(),
                                        settings_schema, FALSE) ||
