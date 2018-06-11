@@ -528,12 +528,14 @@ SkColor NewTabButton::GetButtonFillColor() const {
         ui::NativeTheme::kColorId_ProminentButtonColor);
   }
 
+  int integer = ThemeProperties::COLOR_BACKGROUND_TAB;
+  if (ui::MaterialDesignController::IsTouchOptimizedUiEnabled()) {
+    integer = ThemeProperties::COLOR_TOOLBAR;
+  }
+
   const ui::ThemeProvider* theme_provider = GetThemeProvider();
   DCHECK(theme_provider);
-  return theme_provider->GetColor(
-      ui::MaterialDesignController::IsTouchOptimizedUiEnabled()
-          ? ThemeProperties::COLOR_TOOLBAR
-          : ThemeProperties::COLOR_BACKGROUND_TAB);
+  return theme_provider->GetColor(integer);
 }
 
 void NewTabButton::InitButtonIcons() {
