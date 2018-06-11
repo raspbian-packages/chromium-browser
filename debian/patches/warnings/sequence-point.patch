@@ -1,0 +1,25 @@
+description: fix undefined behavior, variables assigned twice in the same statement
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/cc/layers/surface_layer_impl.cc
++++ b/cc/layers/surface_layer_impl.cc
+@@ -131,7 +131,7 @@ viz::SurfaceDrawQuad* SurfaceLayerImpl::
+   // allocate a new SharedQuadState. Assign the new SharedQuadState to
+   // *|common_shared_quad_state| so that it may be reused by another emitted
+   // viz::SurfaceDrawQuad.
+-  viz::SharedQuadState* shared_quad_state =
++  viz::SharedQuadState*
+     shared_quad_state = render_pass->CreateAndAppendSharedQuadState();
+ 
+   PopulateScaledSharedQuadState(shared_quad_state, device_scale_factor,
+--- a/headless/lib/browser/protocol/browser_handler.cc
++++ b/headless/lib/browser/protocol/browser_handler.cc
+@@ -71,7 +71,7 @@ Response BrowserHandler::Close() {
+ Response BrowserHandler::SetWindowBounds(
+     int window_id,
+     std::unique_ptr<Browser::Bounds> window_bounds) {
+-  HeadlessWebContentsImpl* web_contents = web_contents =
++  HeadlessWebContentsImpl* web_contents =
+       browser()->GetWebContentsForWindowId(window_id);
+   if (!web_contents)
+     return Response::Error("Browser window not found");
