@@ -44,7 +44,7 @@ mojom::LifecycleUnitVisibility GetLifecycleUnitVisibility(
     case content::Visibility::VISIBLE:
       return mojom::LifecycleUnitVisibility::VISIBLE;
   }
-#if defined(COMPILER_MSVC)
+#if 1
   NOTREACHED();
   return mojom::LifecycleUnitVisibility::VISIBLE;
 #endif
