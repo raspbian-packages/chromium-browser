@@ -131,7 +131,7 @@ viz::SurfaceDrawQuad* SurfaceLayerImpl::CreateSurfaceDrawQuad(
   // allocate a new SharedQuadState. Assign the new SharedQuadState to
   // *|common_shared_quad_state| so that it may be reused by another emitted
   // viz::SurfaceDrawQuad.
-  viz::SharedQuadState* shared_quad_state =
+  viz::SharedQuadState*
     shared_quad_state = render_pass->CreateAndAppendSharedQuadState();
 
   PopulateScaledSharedQuadState(shared_quad_state, device_scale_factor,
