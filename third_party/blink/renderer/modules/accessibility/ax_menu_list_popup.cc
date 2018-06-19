@@ -151,8 +151,8 @@ void AXMenuListPopup::DidHide() {
   cache.PostNotification(this, AXObjectCacheImpl::kAXHide);
   if (ActiveDescendant())
     cache.PostNotification(this, AXObjectCacheImpl::kAXChildrenChanged);
-    cache.PostNotification(ActiveDescendant(),
-                           AXObjectCacheImpl::kAXMenuListItemUnselected);
+  cache.PostNotification(ActiveDescendant(),
+                         AXObjectCacheImpl::kAXMenuListItemUnselected);
 }
 
 void AXMenuListPopup::DidShow() {
