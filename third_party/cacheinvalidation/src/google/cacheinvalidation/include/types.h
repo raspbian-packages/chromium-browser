@@ -174,7 +174,7 @@ class ErrorInfo {
  */
 class ObjectId {
  public:
-  ObjectId() : is_initialized_(false) {}
+  ObjectId() : is_initialized_(false), source_(0) {}
 
   /* Creates an object id for the given source and name (the name is copied). */
   ObjectId(int source, const string& name)
