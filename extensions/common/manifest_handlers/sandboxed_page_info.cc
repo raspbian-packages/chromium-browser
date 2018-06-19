@@ -17,10 +17,10 @@
 #include "extensions/common/manifest_constants.h"
 #include "extensions/common/url_pattern.h"
 
-namespace extensions {
-
 namespace keys = extensions::manifest_keys;
-namespace errors = manifest_errors;
+namespace errors = extensions::manifest_errors;
+
+namespace extensions {
 
 namespace {
 
