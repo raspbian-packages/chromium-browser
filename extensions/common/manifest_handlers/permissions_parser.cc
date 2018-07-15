@@ -28,10 +28,10 @@
 #include "extensions/common/url_pattern_set.h"
 #include "url/url_constants.h"
 
-namespace extensions {
+namespace keys = extensions::manifest_keys;
+namespace errors = extensions::manifest_errors;
 
-namespace keys = manifest_keys;
-namespace errors = manifest_errors;
+namespace extensions {
 
 namespace {
 
