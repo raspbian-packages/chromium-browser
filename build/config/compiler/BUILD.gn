@@ -385,7 +385,7 @@ config("compiler") {
     if (!using_sanitizer) {
       ldflags += [
         "-Wl,-z,defs",
-        "-Wl,--as-needed",
+        "-Wl,--no-as-needed",
       ]
     }
   }
