@@ -119,7 +119,7 @@ void InputEventPrediction::UpdateSinglePointer(
     if (predictor != pointer_id_predictor_map_.end()) {
       predictor->second->Update(data);
     } else {
-      pointer_id_predictor_map_.insert({event.id, SetUpPredictor()});
+      pointer_id_predictor_map_[event.id] = SetUpPredictor();
       pointer_id_predictor_map_[event.id]->Update(data);
     }
   }

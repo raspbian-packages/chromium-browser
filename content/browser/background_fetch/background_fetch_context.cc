@@ -218,7 +218,7 @@ void BackgroundFetchContext::InitializeController(
 
   scheduler_->AddJobController(controller.get());
 
-  job_controllers_.insert({unique_id, std::move(controller)});
+  job_controllers_[unique_id] = std::move(controller);
   std::move(done_closure).Run();
 }
 
