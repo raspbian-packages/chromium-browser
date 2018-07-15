@@ -16,8 +16,6 @@
 #include "core/fxcrt/fx_memory.h"
 #include "core/fxcrt/fx_safe_types.h"
 #include "third_party/base/ptr_util.h"
-#include "third_party/libopenjpeg20/openjpeg.h"
-#include "third_party/libopenjpeg20/opj_malloc.h"
 
 namespace {
 
@@ -513,7 +511,6 @@ bool CJPX_Decoder::Init(const unsigned char* src_data, uint32_t src_size) {
     m_Image = nullptr;
     return false;
   }
-  m_Image->pdfium_use_colorspace = !!m_ColorSpace;
 
   if (!m_Parameters.nb_tile_to_decode) {
     if (!opj_set_decode_area(m_Codec, m_Image, m_Parameters.DA_x0,
@@ -550,7 +547,7 @@ bool CJPX_Decoder::Init(const unsigned char* src_data, uint32_t src_size) {
     // TODO(palmer): Using |opj_free| here resolves the crash described in
     // https://crbug.com/737033, but ultimately we need to harmonize the
     // memory allocation strategy across OpenJPEG and its PDFium callers.
-    opj_free(m_Image->icc_profile_buf);
+    free(m_Image->icc_profile_buf);
     m_Image->icc_profile_buf = nullptr;
     m_Image->icc_profile_len = 0;
   }
