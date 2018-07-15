@@ -327,8 +327,8 @@ bool IDNSpoofChecker::SimilarToTopDomains(base::StringPiece16 hostname) {
   if ((u04cf_pos = host.indexOf(0x4CF)) != -1) {
     icu::UnicodeString host_alt(host);
     size_t length = host_alt.length();
-    char16_t* buffer = host_alt.getBuffer(-1);
-    for (char16_t* uc = buffer + u04cf_pos ; uc < buffer + length; ++uc) {
+    UChar* buffer = host_alt.getBuffer(-1);
+    for (UChar* uc = buffer + u04cf_pos ; uc < buffer + length; ++uc) {
       if (*uc == 0x4CF)
         *uc = 0x6C;  // Lowercase L
     }
