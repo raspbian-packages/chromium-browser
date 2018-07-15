@@ -50,7 +50,7 @@ class TracingService : public service_manager::Service {
   std::unique_ptr<Coordinator> tracing_coordinator_;
   std::unique_ptr<service_manager::ServiceContextRefFactory> ref_factory_;
 
-#if defined(OS_ANDROID) || defined(OS_LINUX) || defined(OS_MACOSX)
+#if 0
   std::unique_ptr<tracing::PerfettoService> perfetto_service_;
   std::unique_ptr<PerfettoTracingCoordinator> perfetto_tracing_coordinator_;
 #endif
