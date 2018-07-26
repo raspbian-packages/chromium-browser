@@ -127,6 +127,7 @@ CSSNumericValue* CalcToNumericValue(const CSSCalcExpressionNode& root) {
   DCHECK_EQ(root.GetType(), CSSCalcExpressionNode::kCssCalcBinaryOperation);
   CSSNumericValueVector values;
 
+  /*
   // For cases like calc(1 + 2 + 3), the calc expression tree looks like:
   //       +
   //      / \
@@ -139,6 +140,7 @@ CSSNumericValue* CalcToNumericValue(const CSSCalcExpressionNode& root) {
   //      /|\
   //     1 2 3
   //
+  */
   // So when the left child has the same operator as its parent, we can combine
   // the two nodes. We keep moving down the left side of the tree as long as the
   // current node and the root can be combined, collecting the right child of
