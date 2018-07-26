@@ -18,6 +18,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "components/bookmarks/browser/bookmark_node.h"
+#include "components/bookmarks/browser/url_index.h"
 #include "components/bookmarks/browser/titled_url_index.h"
 
 namespace base {
@@ -29,7 +30,7 @@ namespace bookmarks {
 class BookmarkClient;
 class BookmarkModel;
 class BookmarkNode;
-class UrlIndex;
+#include "components/bookmarks/browser/url_index.h"
 
 // A list of BookmarkPermanentNodes that owns them.
 using BookmarkPermanentNodeList =
