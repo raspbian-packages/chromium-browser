@@ -483,38 +483,6 @@ int VP9EncoderImpl::InitAndSetControlSettings(const VideoCodec* inst) {
                       &svc_params_);
   }
 
-  if (num_spatial_layers_ > 1) {
-    switch (inter_layer_pred_) {
-      case InterLayerPredMode::kOn:
-        vpx_codec_control(encoder_, VP9E_SET_SVC_INTER_LAYER_PRED, 0);
-        break;
-      case InterLayerPredMode::kOff:
-        vpx_codec_control(encoder_, VP9E_SET_SVC_INTER_LAYER_PRED, 1);
-        break;
-      case InterLayerPredMode::kOnKeyPic:
-        vpx_codec_control(encoder_, VP9E_SET_SVC_INTER_LAYER_PRED, 2);
-        break;
-      default:
-        RTC_NOTREACHED();
-    }
-
-    if (!is_flexible_mode_) {
-      // In RTP non-flexible mode, frame dropping of individual layers in a
-      // superframe leads to incorrect reference picture ID values in the
-      // RTP header. Dropping the entire superframe if the base is dropped
-      // or not dropping upper layers if base is not dropped mitigates
-      // the problem.
-      vpx_svc_frame_drop_t svc_drop_frame;
-      svc_drop_frame.framedrop_mode = CONSTRAINED_LAYER_DROP;
-      for (size_t i = 0; i < num_spatial_layers_; ++i) {
-        svc_drop_frame.framedrop_thresh[i] =
-            (i == 0) ? config_->rc_dropframe_thresh : 0;
-      }
-      vpx_codec_control(encoder_, VP9E_SET_SVC_FRAME_DROP_LAYER,
-                        &svc_drop_frame);
-    }
-  }
-
   // Register callback for getting each spatial layer.
   vpx_codec_priv_output_cx_pkt_cb_pair_t cbp = {
       VP9EncoderImpl::EncoderOutputCodedPacketCallback,
@@ -772,10 +740,8 @@ int VP9EncoderImpl::GetEncodedLayerFrame(const vpx_codec_cx_pkt* pkt) {
   encoded_image_.content_type_ = (codec_.mode == kScreensharing)
                                      ? VideoContentType::SCREENSHARE
                                      : VideoContentType::UNSPECIFIED;
-  encoded_image_._encodedHeight =
-      pkt->data.frame.height[layer_id.spatial_layer_id];
-  encoded_image_._encodedWidth =
-      pkt->data.frame.width[layer_id.spatial_layer_id];
+  encoded_image_._encodedHeight = raw_->d_h;
+  encoded_image_._encodedWidth = raw_->d_w;
   encoded_image_.timing_.flags = TimingFrameFlags::kInvalid;
   int qp = -1;
   vpx_codec_control(encoder_, VP8E_GET_LAST_QUANTIZER, &qp);
