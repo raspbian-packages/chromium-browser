@@ -1074,7 +1074,7 @@ void ProfileManager::InitProfileUserPrefs(Profile* profile) {
     profile->GetPrefs()->SetString(prefs::kSupervisedUserId,
                                    supervised_user_id);
   }
-#if !defined(OS_ANDROID)
+#if 0
   // TODO(pmonette): Fix IsNewProfile() to handle the case where the profile is
   // new even if the "Preferences" file already existed. (For example: The
   // master_preferences file is dumped into the default profile on first run,
