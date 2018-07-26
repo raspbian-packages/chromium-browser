@@ -710,26 +710,6 @@ def write_gn_ninja(path, root_gen_dir, options, windows_x64_toolchain):
         'base/threading/thread_local_storage_posix.cc',
         'base/time/time_conversion_posix.cc',
     ])
-    static_libraries['libevent'] = {
-        'sources': [
-            'base/third_party/libevent/buffer.c',
-            'base/third_party/libevent/evbuffer.c',
-            'base/third_party/libevent/evdns.c',
-            'base/third_party/libevent/event.c',
-            'base/third_party/libevent/event_tagging.c',
-            'base/third_party/libevent/evrpc.c',
-            'base/third_party/libevent/evutil.c',
-            'base/third_party/libevent/http.c',
-            'base/third_party/libevent/log.c',
-            'base/third_party/libevent/poll.c',
-            'base/third_party/libevent/select.c',
-            'base/third_party/libevent/signal.c',
-            'base/third_party/libevent/strlcpy.c',
-        ],
-        'tool': 'cc',
-        'include_dirs': [],
-        'cflags': cflags + ['-DHAVE_CONFIG_H'],
-    }
 
   if is_linux or is_aix:
     ldflags.extend(['-pthread'])
@@ -763,13 +743,7 @@ def write_gn_ninja(path, root_gen_dir, options, windows_x64_toolchain):
         'base/allocator/allocator_shim.cc',
         'base/allocator/allocator_shim_default_dispatch_to_glibc.cc',
       ])
-      libs.extend(['-lrt', '-latomic', '-lnspr4'])
-      static_libraries['libevent']['include_dirs'].extend([
-          os.path.join(SRC_ROOT, 'base', 'third_party', 'libevent', 'linux')
-      ])
-      static_libraries['libevent']['sources'].extend([
-         'base/third_party/libevent/epoll.c',
-      ])
+      libs.extend(['-lrt', '-latomic', '-lnspr4', '-levent'])
     else:
       ldflags.extend(['-pthread'])
       libs.extend(['-lrt'])
@@ -808,12 +782,6 @@ def write_gn_ninja(path, root_gen_dir, options, windows_x64_toolchain):
         'base/time/time_exploded_posix.cc',
         'base/time/time_mac.cc',
         'base/threading/platform_thread_mac.mm',
-    ])
-    static_libraries['libevent']['include_dirs'].extend([
-        os.path.join(SRC_ROOT, 'base', 'third_party', 'libevent', 'mac')
-    ])
-    static_libraries['libevent']['sources'].extend([
-        'base/third_party/libevent/kqueue.c',
     ])
 
     libs.extend([
