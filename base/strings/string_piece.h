@@ -382,8 +382,8 @@ BasicStringPiece<STRING_TYPE>::npos =
 
 // MSVC doesn't like complex extern templates and DLLs.
 #if !defined(COMPILER_MSVC)
-extern template class BASE_EXPORT BasicStringPiece<std::string>;
-extern template class BASE_EXPORT BasicStringPiece<string16>;
+//extern template class BASE_EXPORT BasicStringPiece<std::string>;
+//extern template class BASE_EXPORT BasicStringPiece<string16>;
 #endif
 
 // StingPiece operators --------------------------------------------------------
