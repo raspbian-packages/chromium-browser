@@ -16,6 +16,7 @@ import("build/crashpad_buildconfig.gni")
 import("build/test.gni")
 
 config("crashpad_config") {
+  cflags = [ "-Wno-multichar" ]
   include_dirs = [ "." ]
 }
 
