@@ -75,6 +75,8 @@ declare_args() {
     msvs_xtree_patched = false
   }
 
+  optimize_for_size = true
+
   # Enable fatal linker warnings. Building Chromium with certain versions
   # of binutils can cause linker warning.
   # See: https://bugs.chromium.org/p/chromium/issues/detail?id=457359
