@@ -30,7 +30,7 @@ bool ParamTraits<gfx::BufferUsageAndFormat>::Read(
 void ParamTraits<gfx::BufferUsageAndFormat>::Log(
     const gfx::BufferUsageAndFormat& p,
     std::string* l) {
-  l->append(base::StringPrintf("(%d, %d)", p.usage, p.format));
+  l->append(base::StringPrintf("(%d, %d)", (int)p.usage, (int)p.format));
 }
 
 }  // namespace IPC
