@@ -28,6 +28,7 @@
 #include "media/base/video_util.h"
 #include "media/ffmpeg/ffmpeg_common.h"
 #include "media/ffmpeg/ffmpeg_decoding_loop.h"
+#include "media/filters/ffmpeg_glue.h"
 
 namespace media {
 
@@ -110,6 +111,7 @@ static void ReleaseVideoBufferImpl(void* opaque, uint8_t* data) {
 
 // static
 bool FFmpegVideoDecoder::IsCodecSupported(VideoCodec codec) {
+  FFmpegGlue::InitializeFFmpeg();
   return avcodec_find_decoder(VideoCodecToCodecID(codec)) != nullptr;
 }
 
@@ -252,6 +254,8 @@ void FFmpegVideoDecoder::Initialize(
     bound_init_cb.Run(false);
     return;
   }
+
+  FFmpegGlue::InitializeFFmpeg();
 
   if (!ConfigureDecoder(config, low_delay)) {
     bound_init_cb.Run(false);
