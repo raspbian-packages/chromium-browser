@@ -95,7 +95,7 @@ config("swiftshader_subzero_private_config") {
         cflags += [ "-Wno-sign-compare" ]
       }
     }
-  } else if (is_linux || is_mac) {
+  } else if (is_clang) {
     cflags += [ "-Wno-macro-redefined" ]
   }
 
