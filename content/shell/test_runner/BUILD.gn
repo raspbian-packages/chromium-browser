@@ -169,7 +169,7 @@ group("resources") {
   if (is_mac) {
     deps += [ ":test_runner_bundle_data" ]
     data_deps += [ ":test_runner_bundle_data" ]
-  } else {
+  } else if (false) {
     deps += [ "//third_party/test_fonts" ]
     data_deps += [ "//third_party/test_fonts" ]
   }
