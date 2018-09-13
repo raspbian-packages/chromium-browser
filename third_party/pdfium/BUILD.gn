@@ -21,7 +21,6 @@ config("pdfium_common_config") {
   ldflags = []
   include_dirs = [ "." ]
   defines = [
-    "OPJ_STATIC",
     "PNG_PREFIX",
     "PNG_USE_READ_MACROS",
   ]
@@ -75,7 +74,6 @@ config("pdfium_core_config") {
   if (is_linux) {
     if (current_cpu == "x64") {
       defines += [ "_FX_CPU_=_FX_X64_" ]
-      cflags += [ "-fPIC" ]
     } else if (current_cpu == "x86") {
       defines += [ "_FX_CPU_=_FX_X86_" ]
     }
