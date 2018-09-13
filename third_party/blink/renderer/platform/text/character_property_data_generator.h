@@ -244,10 +244,10 @@ static const UChar32 kIsHangulRanges[] = {
     0xD7B0, 0xD7FF,
     // Halfwidth Hangul Jamo
     // https://www.unicode.org/charts/nameslist/c_FF00.html
-    0xFFA0, 0xFFDC,
+    0xFFA0, 0xFFDB,
 };
 
-static const UChar32 kIsHangulArray[] = {};
+static const UChar32 kIsHangulArray[] = {0xFFDC};
 
 }  // namespace blink
 
