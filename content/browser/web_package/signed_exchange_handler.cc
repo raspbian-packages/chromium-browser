@@ -484,7 +484,7 @@ void SignedExchangeHandler::OnCertVerifyComplete(int result) {
         base::StringPrintf(
             "OCSP check failed. response status: %d, revocation status: %d",
             cert_verify_result_.ocsp_result.response_status,
-            cert_verify_result_.ocsp_result.revocation_status),
+            (int)cert_verify_result_.ocsp_result.revocation_status),
         std::make_pair(0 /* signature_index */,
                        SignedExchangeError::Field::kSignatureCertUrl));
     RunErrorCallback(net::ERR_INVALID_SIGNED_EXCHANGE);
@@ -499,7 +499,7 @@ void SignedExchangeHandler::OnCertVerifyComplete(int result) {
         base::StringPrintf(
             "CT verification failed. result: %s, policy compliance: %d",
             net::ErrorToShortString(ct_result).c_str(),
-            ct_verify_result.policy_compliance),
+            (int)ct_verify_result.policy_compliance),
         std::make_pair(0 /* signature_index */,
                        SignedExchangeError::Field::kSignatureCertUrl));
     RunErrorCallback(net::ERR_INVALID_SIGNED_EXCHANGE);
