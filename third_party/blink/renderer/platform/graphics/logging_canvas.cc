@@ -528,8 +528,12 @@ String StringForUTF32LEText(const void* text, size_t byte_length) {
   utf16 = icu::UnicodeString::fromUTF32(reinterpret_cast<const UChar32*>(text),
                                         static_cast<int32_t>(byte_length));
 #endif
+#if U_ICU_VERSION_MAJOR_NUM >= 59
   return String(icu::toUCharPtr(utf16.getBuffer()),
                 static_cast<unsigned>(utf16.length()));
+#else
+  return String(utf16.getBuffer(),static_cast<unsigned>(utf16.length()));
+#endif
 }
 
 String StringForText(const void* text,
