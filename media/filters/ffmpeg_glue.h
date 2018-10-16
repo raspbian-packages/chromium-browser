@@ -59,6 +59,8 @@ class MEDIA_EXPORT FFmpegURLProtocol {
 
 class MEDIA_EXPORT FFmpegGlue {
  public:
+  static void InitializeFFmpeg();
+
   // See file documentation for usage.  |protocol| must outlive FFmpegGlue.
   explicit FFmpegGlue(FFmpegURLProtocol* protocol);
   ~FFmpegGlue();
