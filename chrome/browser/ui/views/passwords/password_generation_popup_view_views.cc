@@ -52,11 +52,11 @@ class PasswordGenerationPopupViewViews::GeneratedPasswordBox
     BuildColumnSet(layout);
     layout->StartRow(views::GridLayout::kFixedSize, 0);
 
+    int text_style = STYLE_SECONDARY;
+    if (state == PasswordGenerationPopupController::kOfferGeneration)
+      text_style = views::style::STYLE_PRIMARY;
     layout->AddView(autofill::CreateLabelWithColorReadabilityDisabled(
-        suggestion, ChromeTextContext::CONTEXT_BODY_TEXT_LARGE,
-        state == PasswordGenerationPopupController::kOfferGeneration
-            ? views::style::STYLE_PRIMARY
-            : STYLE_SECONDARY));
+        suggestion, ChromeTextContext::CONTEXT_BODY_TEXT_LARGE, text_style));
 
     DCHECK(!password_label_);
     password_label_ = autofill::CreateLabelWithColorReadabilityDisabled(

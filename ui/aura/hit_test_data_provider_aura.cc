@@ -50,11 +50,10 @@ base::Optional<viz::HitTestRegionList> HitTestDataProviderAura::GetHitTestData(
     return base::nullopt;
 
   base::Optional<viz::HitTestRegionList> hit_test_region_list(base::in_place);
-  hit_test_region_list->flags =
-      event_targeting_policy ==
-              ws::mojom::EventTargetingPolicy::DESCENDANTS_ONLY
-          ? viz::HitTestRegionFlags::kHitTestIgnore
-          : viz::HitTestRegionFlags::kHitTestMine;
+  hit_test_region_list->flags = viz::HitTestRegionFlags::kHitTestMine;
+  if (event_targeting_policy ==
+              ws::mojom::EventTargetingPolicy::DESCENDANTS_ONLY)
+    hit_test_region_list->flags = viz::HitTestRegionFlags::kHitTestIgnore;
   // TODO(crbug.com/805416): Use pixels instead of DIP units for bounds.
   hit_test_region_list->bounds = window_->bounds();
 
