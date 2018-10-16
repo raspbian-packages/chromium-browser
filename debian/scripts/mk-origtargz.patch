@@ -1,0 +1,14 @@
+--- a/debian/scripts/mk-origtargz	2018-10-04 23:00:11.000000000 +0000
++++ b/debian/scripts/mk-origtargz	2018-10-13 04:33:21.242847631 +0000
+@@ -568,6 +568,11 @@
+ }
+ 
+ if ($deletecount) {
++    for my $file (@to_delete) {
++        print "$file\n";
++    }
++    exit 0;
++
+     $destfilebase = sprintf "%s_%s%s.%s.tar", $package, $version, $suffix,
+       $orig;
+     $destfiletar = sprintf "%s/%s", $destdir,     $destfilebase;
