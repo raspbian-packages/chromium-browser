@@ -23,7 +23,7 @@
 #ifndef S2_S1ANGLE_H_
 #define S2_S1ANGLE_H_
 
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <ostream>
 #include <type_traits>
