@@ -86,7 +86,12 @@ bool X11InputMethodContextImplGtk::DispatchKeyEvent(
   gint win_y = 0;
   gdk_window_get_origin(event->key.window, &win_x, &win_y);
 
+#if GTK_MAJOR_VERSION == 2
+  gint factor = 1;
+#else
   gint factor = gdk_window_get_scale_factor(event->key.window);
+#endif
+
   gint caret_x = last_caret_bounds_.x() / factor;
   gint caret_y = last_caret_bounds_.y() / factor;
   gint caret_w = last_caret_bounds_.width() / factor;
@@ -218,11 +223,19 @@ GdkEvent* X11InputMethodContextImplGtk::GdkEventFromNativeEvent(
   g_free(keyvals);
   keyvals = nullptr;
 // Get a GdkWindow.
+#if GTK_CHECK_VERSION(2, 24, 0)
   GdkWindow* window = gdk_x11_window_lookup_for_display(display, xkey.window);
+#else
+  GdkWindow* window = gdk_window_lookup_for_display(display, xkey.window);
+#endif
   if (window)
     g_object_ref(window);
   else
+#if GTK_CHECK_VERSION(2, 24, 0)
     window = gdk_x11_window_foreign_new_for_display(display, xkey.window);
+#else
+    window = gdk_window_foreign_new_for_display(display, xkey.window);
+#endif
   if (!window) {
     LOG(ERROR) << "Cannot get a GdkWindow for a key event.";
     return nullptr;
