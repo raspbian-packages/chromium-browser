@@ -369,7 +369,6 @@ def WriteGNNinja(path, platform, host, options, linux_sysroot):
         cflags.append('--sysroot=' + linux_sysroot)
         ldflags.append('--sysroot=' + linux_sysroot)
       ldflags.extend([
-          '-static-libstdc++',
           '-Wl,--as-needed',
       ])
       libs.extend([
