@@ -228,10 +228,13 @@ void ConvertCdmKeysInfo(const media::CdmKeysInfo& keys_info,
   }
 }
 
+#include <libavformat/avformat.h>
+
 void INITIALIZE_CDM_MODULE() {
   DVLOG(1) << __func__;
 #if defined(CLEAR_KEY_CDM_USE_FFMPEG_DECODER)
   media::InitializeMediaLibrary();
+  av_register_all();
 #endif  // CLEAR_KEY_CDM_USE_FFMPEG_DECODER
 
   g_is_cdm_module_initialized = true;
