@@ -149,11 +149,11 @@ bool MinidumpFileWriter::CopyStringToMDString(const wchar_t *str,
                                               unsigned int length,
                                               TypedMDRVA<MDString> *mdstring) {
   bool result = true;
-  if (sizeof(wchar_t) == sizeof(uint16_t)) {
+  if (sizeof(wchar_t) == sizeof(UChar)) {
     // Shortcut if wchar_t is the same size as MDString's buffer
     result = mdstring->Copy(str, mdstring->get()->length);
   } else {
-    uint16_t out[2];
+    UChar out[2];
     int out_idx = 0;
 
     // Copy the string character by character
@@ -170,7 +170,7 @@ bool MinidumpFileWriter::CopyStringToMDString(const wchar_t *str,
       // zero, but the second one may be zero, depending on the conversion from
       // UTF-32.
       int out_count = out[1] ? 2 : 1;
-      size_t out_size = sizeof(uint16_t) * out_count;
+      size_t out_size = sizeof(UChar) * out_count;
       result = mdstring->CopyIndexAfterObject(out_idx, out, out_size);
       out_idx += out_count;
     }
@@ -182,7 +182,7 @@ bool MinidumpFileWriter::CopyStringToMDString(const char *str,
                                               unsigned int length,
                                               TypedMDRVA<MDString> *mdstring) {
   bool result = true;
-  uint16_t out[2];
+  UChar out[2];
   int out_idx = 0;
 
   // Copy the string character by character
@@ -197,7 +197,7 @@ bool MinidumpFileWriter::CopyStringToMDString(const char *str,
 
     // Append the one or two UTF-16 characters
     int out_count = out[1] ? 2 : 1;
-    size_t out_size = sizeof(uint16_t) * out_count;
+    size_t out_size = sizeof(UChar) * out_count;
     result = mdstring->CopyIndexAfterObject(out_idx, out, out_size);
     out_idx += out_count;
   }
