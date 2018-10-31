@@ -77,7 +77,11 @@ bool GtkKeyBindingsHandler::MatchEvent(
   // will be emitted.
 
   gtk_bindings_activate_event(
+#if GDK_MAJOR_VERSION >= 3
       G_OBJECT(handler_),
+#else
+      GTK_OBJECT(handler_),
+#endif
       &gdk_event);
 
   bool matched = !edit_commands_.empty();

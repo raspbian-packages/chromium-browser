@@ -7,4 +7,4 @@ declare_args() {
   gtk_version = 3
 }
 
-assert(gtk_version >= 3 && gtk_version <= 4)
+assert(gtk_version >= 2 && gtk_version <= 4)
