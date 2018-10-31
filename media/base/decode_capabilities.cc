@@ -12,8 +12,8 @@
 #include "ui/display/display_switches.h"
 
 #if BUILDFLAG(ENABLE_LIBVPX)
-#include "third_party/libvpx/source/libvpx/vpx/vp8dx.h"
-#include "third_party/libvpx/source/libvpx/vpx/vpx_codec.h"
+#include <vpx/vp8dx.h>
+#include <vpx/vpx_codec.h>
 #endif
 
 namespace media {
