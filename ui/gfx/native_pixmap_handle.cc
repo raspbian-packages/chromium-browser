@@ -11,7 +11,7 @@
 
 namespace gfx {
 
-#if defined(OS_LINUX)
+#if 0
 static_assert(NativePixmapPlane::kNoModifier == DRM_FORMAT_MOD_INVALID,
               "gfx::NativePixmapPlane::kNoModifier should be an alias for"
               "DRM_FORMAT_MOD_INVALID");
