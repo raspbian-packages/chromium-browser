@@ -36,7 +36,7 @@ struct SubsampleEntry {
 // does not match |input_size|.
 MEDIA_EXPORT bool VerifySubsamplesMatchSize(
     const std::vector<SubsampleEntry>& subsamples,
-    size_t input_size);
+    std::size_t input_size);
 
 }  // namespace media
 
