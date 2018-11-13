@@ -145,6 +145,10 @@ class GtkUi : public views::LinuxUI {
   // Updates |default_font_*|.
   void UpdateDefaultFont();
 
+  // Gets a ChromeGtkFrame theme color; returns true on success.
+  bool GetChromeStyleColor(const char* sytle_property,
+                           SkColor* ret_color) const;
+
   float GetRawDeviceScaleFactor();
 
   ui::NativeTheme* native_theme_;

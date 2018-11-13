@@ -169,8 +169,12 @@ int EventFlagsFromGdkState(guint state) {
 }
 
 void TurnButtonBlue(GtkWidget* button) {
+#if GTK_MAJOR_VERSION == 2
+  gtk_widget_set_can_default(button, true);
+#else
   gtk_style_context_add_class(gtk_widget_get_style_context(button),
                               "suggested-action");
+#endif
 }
 
 void SetGtkTransientForAura(GtkWidget* dialog, aura::Window* parent) {
@@ -215,6 +219,7 @@ void ParseButtonLayout(const std::string& button_string,
   }
 }
 
+#if GTK_MAJOR_VERSION > 2
 namespace {
 
 float GetDeviceScaleFactor() {
@@ -622,5 +627,6 @@ SkColor GetSeparatorColor(const std::string& css_selector) {
   gtk_render_frame(context, surface.cairo(), 0, 0, w, h);
   return surface.GetAveragePixelValue(false);
 }
+#endif
 
 }  // namespace libgtkui
