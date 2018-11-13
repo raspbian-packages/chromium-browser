@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "core/fxcodec/jbig2/JBig2_Context.h"
-#include <openjpeg-2.3/openjpeg.h>
+#include <openjpeg-2.1/openjpeg.h>
 
 class CPDF_ColorSpace;
 
