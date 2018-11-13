@@ -101,7 +101,7 @@ bool IsColorSpaceSupported(const media::VideoColorSpace& color_space) {
 }
 
 bool IsVp9ProfileSupported(VideoCodecProfile profile) {
-#if BUILDFLAG(ENABLE_LIBVPX)
+#if 0
   // High bit depth capabilities may be toggled via LibVPX config flags.
   static bool vpx_supports_high_bit_depth =
       (vpx_codec_get_caps(vpx_codec_vp9_dx()) & VPX_CODEC_CAP_HIGHBITDEPTH) !=
