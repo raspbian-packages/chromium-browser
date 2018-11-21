@@ -189,8 +189,6 @@ static VideoCodec CodecIDToVideoCodec(AVCodecID codec_id) {
       return kCodecVP8;
     case AV_CODEC_ID_VP9:
       return kCodecVP9;
-    case AV_CODEC_ID_AV1:
-      return kCodecAV1;
     default:
       DVLOG(1) << "Unknown video CodecID: " << codec_id;
   }
@@ -213,8 +211,6 @@ AVCodecID VideoCodecToCodecID(VideoCodec video_codec) {
       return AV_CODEC_ID_VP8;
     case kCodecVP9:
       return AV_CODEC_ID_VP9;
-    case kCodecAV1:
-      return AV_CODEC_ID_AV1;
     default:
       DVLOG(1) << "Unknown VideoCodec: " << video_codec;
   }
