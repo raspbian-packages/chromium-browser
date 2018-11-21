@@ -28,7 +28,7 @@ source_set("lib") {
     "//services/tracing/public/cpp",
   ]
 
-  if (is_mac || is_linux || is_android || is_win) {
+  if (false) {
     sources += [
       "perfetto/json_trace_exporter.cc",
       "perfetto/json_trace_exporter.h",
@@ -76,7 +76,7 @@ source_set("tests") {
     "test_util.h",
   ]
 
-  if (is_mac || is_linux || is_android) {
+  if (false) {
     sources += [ "public/cpp/perfetto/trace_event_data_source_unittest.cc" ]
   }
 
@@ -97,7 +97,7 @@ source_set("tests") {
     "//testing/gtest",
   ]
 
-  if (is_mac || is_linux || is_android) {
+  if (false) {
     sources += [
       "perfetto/json_trace_exporter_unittest.cc",
       "perfetto/perfetto_integration_unittest.cc",
