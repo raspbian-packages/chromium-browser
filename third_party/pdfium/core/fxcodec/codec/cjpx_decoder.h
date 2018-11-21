@@ -13,7 +13,7 @@
 #include "core/fxcodec/codec/codec_int.h"
 #include "core/fxcrt/unowned_ptr.h"
 #include "third_party/base/span.h"
-#include <openjpeg-2.3/openjpeg.h>
+#include <openjpeg-2.1/openjpeg.h>
 
 class CPDF_ColorSpace;
 

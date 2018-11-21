@@ -41,20 +41,20 @@ opj_stream_t* fx_opj_stream_create_memory_stream(DecodeData* data,
 }
 
 bool alloc_rgb(int** out_r, int** out_g, int** out_b, size_t size) {
-  int* r = static_cast<int*>(opj_image_data_alloc(size));
+  int* r = FX_Alloc(int, size);
   if (!r)
     return false;
 
-  int* g = static_cast<int*>(opj_image_data_alloc(size));
+  int* g = FX_Alloc(int, size);
   if (!g) {
-    opj_image_data_free(r);
+    FX_Free(r);
     return false;
   }
 
-  int* b = static_cast<int*>(opj_image_data_alloc(size));
+  int* b = FX_Alloc(int, size);
   if (!b) {
-    opj_image_data_free(r);
-    opj_image_data_free(g);
+    FX_Free(r);
+    FX_Free(g);
     return false;
   }
 
@@ -115,9 +115,9 @@ void sycc444_to_rgb(opj_image_t* img) {
   for (size_t i = 0; i < max_size.ValueOrDie(); ++i) {
     sycc_to_rgb(offset, upb, *y++, *cb++, *cr++, r++, g++, b++);
   }
-  opj_image_data_free(img->comps[0].data);
-  opj_image_data_free(img->comps[1].data);
-  opj_image_data_free(img->comps[2].data);
+  FX_Free(img->comps[0].data);
+  FX_Free(img->comps[1].data);
+  FX_Free(img->comps[2].data);
   img->comps[0].data = d0;
   img->comps[1].data = d1;
   img->comps[2].data = d2;
@@ -183,9 +183,9 @@ void sycc422_to_rgb(opj_image_t* img) {
       sycc_to_rgb(offset, upb, *y++, *cb++, *cr++, r++, g++, b++);
     }
   }
-  opj_image_data_free(img->comps[0].data);
-  opj_image_data_free(img->comps[1].data);
-  opj_image_data_free(img->comps[2].data);
+  FX_Free(img->comps[0].data);
+  FX_Free(img->comps[1].data);
+  FX_Free(img->comps[2].data);
   img->comps[0].data = d0;
   img->comps[1].data = d1;
   img->comps[2].data = d2;
@@ -439,9 +439,9 @@ void sycc420_to_rgb(opj_image_t* img) {
     }
   }
 
-  opj_image_data_free(img->comps[0].data);
-  opj_image_data_free(img->comps[1].data);
-  opj_image_data_free(img->comps[2].data);
+  FX_Free(img->comps[0].data);
+  FX_Free(img->comps[1].data);
+  FX_Free(img->comps[2].data);
   img->comps[0].data = d0;
   img->comps[1].data = d1;
   img->comps[2].data = d2;
