@@ -320,6 +320,7 @@ def WriteGNNinja(path, platform, host, options):
           '-lpthread',
           # Additional system libraries that are used.
           '-lnspr4',
+          '-levent',
       ])
     elif platform.is_darwin():
       min_mac_version_flag = '-mmacosx-version-min=10.9'
