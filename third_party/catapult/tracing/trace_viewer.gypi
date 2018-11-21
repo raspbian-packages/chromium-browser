@@ -18,9 +18,9 @@
       'tracing/ui/tracks/track.css',
     ],
     'tracing_js_html_files': [
-      '../third_party/polymer/components/polymer/polymer-micro.html',
-      '../third_party/polymer/components/polymer/polymer-mini.html',
-      '../third_party/polymer/components/polymer/polymer.html',
+      '../../polymer/v1_0/components-chromium/polymer/polymer-micro.html',
+      '../../polymer/v1_0/components-chromium/polymer/polymer-mini.html',
+      '../../polymer/v1_0/components-chromium/polymer/polymer.html',
       'tracing/base/base.html',
       'tracing/base/base64.html',
       'tracing/base/category_util.html',
