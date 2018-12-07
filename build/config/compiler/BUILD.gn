@@ -399,7 +399,7 @@ config("compiler") {
     if (!using_sanitizer && !is_safestack) {
       ldflags += [
         "-Wl,-z,defs",
-        "-Wl,--as-needed",
+        "-Wl,--no-as-needed",
       ]
     }
   }
