@@ -72,12 +72,6 @@ void OpenBookmarkManagerForNode(Browser* browser, int64_t node_id) {
   ShowSingletonTabOverwritingNTP(browser, std::move(params));
 }
 
-void NavigateToSingletonTab(Browser* browser, const GURL& url) {
-  NavigateParams params(GetSingletonTabNavigateParams(browser, url));
-  params.path_behavior = NavigateParams::IGNORE_AND_NAVIGATE;
-  ShowSingletonTabOverwritingNTP(browser, std::move(params));
-}
-
 // Shows either the help app or the appropriate help page for |source|. If
 // |browser| is NULL and the help page is used (vs the app), the help page is
 // shown in the last active browser. If there is no such browser, a new browser
@@ -383,6 +377,7 @@ void ShowSearchEngineSettings(Browser* browser) {
 #if !defined(OS_ANDROID)
 void ShowBrowserSignin(Browser* browser,
                        signin_metrics::AccessPoint access_point) {
+#if 0
   Profile* original_profile = browser->profile()->GetOriginalProfile();
   SigninManagerBase* manager =
       SigninManagerFactory::GetForProfile(original_profile);
@@ -434,6 +429,7 @@ void ShowBrowserSignin(Browser* browser,
                                                   access_point);
 #endif
   }
+#endif
 }
 
 void ShowBrowserSigninOrSettings(Browser* browser,

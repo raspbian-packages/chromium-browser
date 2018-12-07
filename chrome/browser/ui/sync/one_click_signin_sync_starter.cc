@@ -395,20 +395,6 @@ void OneClickSigninSyncStarter::CancelSigninAndDelete() {
 }
 
 void OneClickSigninSyncStarter::ConfirmAndSignin() {
-  SigninManager* signin = SigninManagerFactory::GetForProfile(profile_);
-  if (confirmation_required_ == CONFIRM_UNTRUSTED_SIGNIN) {
-    browser_ = EnsureBrowser(browser_, profile_);
-    base::RecordAction(
-        base::UserMetricsAction("Signin_Show_UntrustedSigninPrompt"));
-    // Display a confirmation dialog to the user.
-    browser_->window()->ShowOneClickSigninConfirmation(
-        base::UTF8ToUTF16(signin->GetUsernameForAuthInProgress()),
-        base::Bind(&OneClickSigninSyncStarter::UntrustedSigninConfirmed,
-                   weak_pointer_factory_.GetWeakPtr()));
-  } else {
-    // No confirmation required - just sign in the user.
-    signin->CompletePendingSignin();
-  }
 }
 
 void OneClickSigninSyncStarter::UntrustedSigninConfirmed(
