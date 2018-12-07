@@ -75,6 +75,15 @@
 #include "ui/views/linux_ui/window_button_order_observer.h"
 #include "ui/views/resources/grit/views_resources.h"
 
+#if GTK_MAJOR_VERSION == 2
+#include "chrome/browser/ui/libgtkui/gtk2/chrome_gtk_frame.h"
+#include "chrome/browser/ui/libgtkui/gtk2/native_theme_gtk2.h"
+#elif GTK_MAJOR_VERSION == 3
+#include "chrome/browser/ui/libgtkui/native_theme_gtk.h"
+#include "chrome/browser/ui/libgtkui/nav_button_provider_gtk.h"
+#include "chrome/browser/ui/libgtkui/settings_provider_gtk.h"
+#endif
+
 #if defined(USE_GIO)
 #include "chrome/browser/ui/libgtkui/settings_provider_gsettings.h"
 #endif
@@ -134,6 +143,49 @@ class GtkButtonImageSource : public gfx::ImageSkiaSource {
         width, height, width * 4);
     cairo_t* cr = cairo_create(surface);
 
+#if GTK_MAJOR_VERSION == 2
+    // Create a temporary GTK button to snapshot
+    GtkWidget* window = gtk_offscreen_window_new();
+    GtkWidget* button = gtk_toggle_button_new();
+
+    if (state_ == ui::NativeTheme::kPressed)
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), true);
+    else if (state_ == ui::NativeTheme::kDisabled)
+      gtk_widget_set_sensitive(button, false);
+
+    gtk_widget_set_size_request(button, width, height);
+    gtk_container_add(GTK_CONTAINER(window), button);
+
+    if (is_blue_)
+      TurnButtonBlue(button);
+
+    gtk_widget_show_all(window);
+
+    if (focus_)
+      GTK_WIDGET_SET_FLAGS(button, GTK_HAS_FOCUS);
+
+    int w, h;
+    GdkPixmap* pixmap;
+
+    {
+      // http://crbug.com/346740
+      ANNOTATE_SCOPED_MEMORY_LEAK;
+      pixmap = gtk_widget_get_snapshot(button, nullptr);
+    }
+
+    gdk_drawable_get_size(GDK_DRAWABLE(pixmap), &w, &h);
+    GdkColormap* colormap = gdk_drawable_get_colormap(pixmap);
+    GdkPixbuf* pixbuf = gdk_pixbuf_get_from_drawable(
+        nullptr, GDK_DRAWABLE(pixmap), colormap, 0, 0, 0, 0, w, h);
+
+    gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
+    cairo_paint(cr);
+
+    g_object_unref(pixbuf);
+    g_object_unref(pixmap);
+
+    gtk_widget_destroy(window);
+#else
     ScopedStyleContext context = GetStyleContextFromCss(
         is_blue_ ? "GtkButton#button.default.suggested-action"
                  : "GtkButton#button");
@@ -181,6 +233,7 @@ class GtkButtonImageSource : public gfx::ImageSkiaSource {
       gtk_render_focus(context, cr, focus_rect.x(), focus_rect.y(),
                        focus_rect.width(), focus_rect.height());
     }
+#endif
 
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
@@ -245,15 +298,19 @@ int indicators_count;
 // The unknown content type.
 const char kUnknownContentType[] = "application/octet-stream";
 
+#if GTK_MAJOR_VERSION > 2
 using GdkSetAllowedBackendsFn = void (*)(const gchar*);
 // Place this function pointer in read-only memory after being resolved to
 // prevent it being tampered with. See https://crbug.com/771365 for details.
 PROTECTED_MEMORY_SECTION base::ProtectedMemory<GdkSetAllowedBackendsFn>
     g_gdk_set_allowed_backends;
+#endif
 
 std::unique_ptr<SettingsProvider> CreateSettingsProvider(GtkUi* gtk_ui) {
+#if GTK_MAJOR_VERSION == 3
   if (GtkVersionCheck(3, 14))
     return std::make_unique<SettingsProviderGtk>(gtk_ui);
+#endif
 #if defined(USE_GIO)
   return std::make_unique<SettingsProviderGSettings>(gtk_ui);
 #else
@@ -311,8 +368,10 @@ gfx::FontRenderParams GetGtkFontRenderParams() {
 }
 
 views::LinuxUI::NonClientWindowFrameAction GetDefaultMiddleClickAction() {
+#if GTK_MAJOR_VERSION == 3
   if (GtkVersionCheck(3, 14))
     return views::LinuxUI::WINDOW_FRAME_ACTION_NONE;
+#endif
   std::unique_ptr<base::Environment> env(base::Environment::Create());
   switch (base::nix::GetDesktopEnvironment(env.get())) {
     case base::nix::DESKTOP_ENVIRONMENT_KDE4:
@@ -336,6 +395,7 @@ GtkUi::GtkUi() {
       GetDefaultMiddleClickAction();
   window_frame_actions_[WINDOW_FRAME_ACTION_SOURCE_RIGHT_CLICK] =
       views::LinuxUI::WINDOW_FRAME_ACTION_MENU;
+#if GTK_MAJOR_VERSION >= 3
   // Force Gtk to use Xwayland if it would have used wayland.  libgtkui assumes
   // the use of X11 (eg. X11InputMethodContextImplGtk) and will crash under
   // other backends.
@@ -352,9 +412,17 @@ GtkUi::GtkUi() {
   // do it once it is ready.
   std::unique_ptr<base::Environment> env(base::Environment::Create());
   env->SetVar("NO_AT_BRIDGE", "1");
+#endif
   GtkInitFromCommandLine(*base::CommandLine::ForCurrentProcess());
+#if GTK_MAJOR_VERSION == 2
+  native_theme_ = NativeThemeGtk2::instance();
+  fake_window_ = chrome_gtk_frame_new();
+#elif GTK_MAJOR_VERSION == 3
   native_theme_ = NativeThemeGtk::instance();
   fake_window_ = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#else
+#error "Unsupported GTK version"
+#endif
   gtk_widget_realize(fake_window_);
 }
 
@@ -749,8 +817,10 @@ bool GtkUi::PreferDarkTheme() const {
 
 #if BUILDFLAG(ENABLE_NATIVE_WINDOW_NAV_BUTTONS)
 std::unique_ptr<views::NavButtonProvider> GtkUi::CreateNavButtonProvider() {
+#if GTK_MAJOR_VERSION == 3
   if (GtkVersionCheck(3, 14))
     return std::make_unique<libgtkui::NavButtonProviderGtk>();
+#endif
   return nullptr;
 }
 #endif
@@ -836,6 +906,67 @@ void GtkUi::LoadGtkValues() {
 }
 
 void GtkUi::UpdateColors() {
+#if GTK_MAJOR_VERSION == 2
+
+  const color_utils::HSL kDefaultFrameShift = {-1, -1, 0.4};
+  SkColor frame_color =
+      native_theme_->GetSystemColor(ui::NativeTheme::kColorId_WindowBackground);
+  frame_color = color_utils::HSLShift(frame_color, kDefaultFrameShift);
+  GetChromeStyleColor("frame-color", &frame_color);
+  colors_[ThemeProperties::COLOR_FRAME] = frame_color;
+
+  GtkStyle* style = gtk_rc_get_style(fake_window_);
+  SkColor temp_color = color_utils::HSLShift(
+      GdkColorToSkColor(style->bg[GTK_STATE_INSENSITIVE]), kDefaultFrameShift);
+  GetChromeStyleColor("inactive-frame-color", &temp_color);
+  colors_[ThemeProperties::COLOR_FRAME_INACTIVE] = temp_color;
+
+  temp_color = color_utils::HSLShift(frame_color, kDefaultTintFrameIncognito);
+  GetChromeStyleColor("incognito-frame-color", &temp_color);
+  colors_[ThemeProperties::COLOR_FRAME_INCOGNITO] = temp_color;
+
+  SkColor tab_color =
+      native_theme_->GetSystemColor(ui::NativeTheme::kColorId_DialogBackground);
+  SkColor label_color = native_theme_->GetSystemColor(
+      ui::NativeTheme::kColorId_LabelEnabledColor);
+
+  colors_[ThemeProperties::COLOR_TOOLBAR_BUTTON_ICON] =
+      color_utils::DeriveDefaultIconColor(label_color);
+
+  colors_[ThemeProperties::COLOR_TAB_TEXT] = label_color;
+  colors_[ThemeProperties::COLOR_BOOKMARK_TEXT] = label_color;
+  colors_[ThemeProperties::COLOR_BACKGROUND_TAB_TEXT] =
+      color_utils::BlendTowardOppositeLuma(label_color, 50);
+
+  inactive_selection_bg_color_ = native_theme_->GetSystemColor(
+      ui::NativeTheme::kColorId_TextfieldReadOnlyBackground);
+  inactive_selection_fg_color_ = native_theme_->GetSystemColor(
+      ui::NativeTheme::kColorId_TextfieldReadOnlyColor);
+
+  // We pick the text and background colors for the NTP out of the
+  // colors for a GtkEntry. We do this because GtkEntries background
+  // color is never the same as |tab_color|, is usually a white,
+  // and when it isn't a white, provides sufficient contrast to
+  // |tab_color|. Try this out with Darklooks, HighContrastInverse
+  // or ThinIce.
+  colors_[ThemeProperties::COLOR_NTP_BACKGROUND] =
+      native_theme_->GetSystemColor(
+          ui::NativeTheme::kColorId_TextfieldDefaultBackground);
+  colors_[ThemeProperties::COLOR_NTP_TEXT] = native_theme_->GetSystemColor(
+      ui::NativeTheme::kColorId_TextfieldDefaultColor);
+  // The NTP header is the color that surrounds the current active
+  // thumbnail on the NTP, and acts as the border of the "Recent
+  // Links" box. It would be awesome if they were separated so we
+  // could use GetBorderColor() for the border around the "Recent
+  // Links" section, but matching the frame color is more important.
+  colors_[ThemeProperties::COLOR_NTP_HEADER] =
+      colors_[ThemeProperties::COLOR_FRAME];
+
+  colors_[ThemeProperties::COLOR_TOOLBAR] = tab_color;
+  colors_[ThemeProperties::COLOR_CONTROL_BACKGROUND] = tab_color;
+
+#else
+
   SkColor location_bar_border = GetBorderColor("GtkEntry#entry");
   if (SkColorGetA(location_bar_border))
     colors_[ThemeProperties::COLOR_LOCATION_BAR_BORDER] = location_bar_border;
@@ -879,6 +1010,8 @@ void GtkUi::UpdateColors() {
   colors_[ThemeProperties::COLOR_BACKGROUND_TAB_INCOGNITO_INACTIVE] =
       SK_ColorTRANSPARENT;
 
+#endif
+
   colors_[ThemeProperties::COLOR_NTP_LINK] = native_theme_->GetSystemColor(
       ui::NativeTheme::kColorId_TextfieldSelectionBackgroundFocused);
 
@@ -899,6 +1032,8 @@ void GtkUi::UpdateColors() {
   colors_[ThemeProperties::COLOR_TAB_THROBBER_WAITING] =
       native_theme_->GetSystemColor(
           ui::NativeTheme::kColorId_ThrobberWaitingColor);
+
+#if GTK_MAJOR_VERSION >= 3
 
   // Generate colors that depend on whether or not a custom window frame is
   // used.  These colors belong in |color_map| below, not |colors_|.
@@ -972,6 +1107,8 @@ void GtkUi::UpdateColors() {
           toolbar_top_separator_inactive;
     }
   }
+
+#endif
 }
 
 void GtkUi::UpdateCursorTheme() {
@@ -1036,6 +1173,20 @@ void GtkUi::UpdateDefaultFont() {
   g_object_unref(fake_label);
 }
 
+bool GtkUi::GetChromeStyleColor(const char* style_property,
+                                SkColor* ret_color) const {
+#if GTK_MAJOR_VERSION == 2
+  GdkColor* style_color = nullptr;
+  gtk_widget_style_get(fake_window_, style_property, &style_color, nullptr);
+  if (style_color) {
+    *ret_color = GdkColorToSkColor(*style_color);
+    gdk_color_free(style_color);
+    return true;
+  }
+#endif
+  return false;
+}
+
 void GtkUi::ResetStyle() {
   LoadGtkValues();
   native_theme_->NotifyObservers();
@@ -1045,12 +1196,19 @@ float GtkUi::GetRawDeviceScaleFactor() {
   if (display::Display::HasForceDeviceScaleFactor())
     return display::Display::GetForcedDeviceScaleFactor();
 
+#if GTK_MAJOR_VERSION == 2
+  GtkSettings* gtk_settings = gtk_settings_get_default();
+  gint gtk_dpi = -1;
+  g_object_get(gtk_settings, "gtk-xft-dpi", &gtk_dpi, nullptr);
+  const float scale_factor = gtk_dpi / (1024 * kDefaultDPI);
+#else
   GdkScreen* screen = gdk_screen_get_default();
   gint scale = gtk_widget_get_scale_factor(fake_window_);
   DCHECK_GT(scale, 0);
   gdouble resolution = gdk_screen_get_resolution(screen);
   const float scale_factor =
       resolution <= 0 ? scale : resolution * scale / kDefaultDPI;
+#endif
 
   // Blacklist scaling factors <120% (crbug.com/484400) and round
   // to 1 decimal to prevent rendering problems (crbug.com/485183).

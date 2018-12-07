@@ -21,11 +21,13 @@ GtkStatusIcon::GtkStatusIcon(const gfx::ImageSkia& image,
                              const base::string16& tool_tip) {
   GdkPixbuf* pixbuf = GdkPixbufFromSkBitmap(*image.bitmap());
   {
+#if GTK_MAJOR_VERSION == 3
     // GTK has a bug that leaks 384 bytes when creating a GtkStatusIcon.  It
     // will not be fixed since the status icon was deprecated in version 3.14.
     // Luckily, Chromium doesn't need to create a status icon very often, if at
     // all.
     ANNOTATE_SCOPED_MEMORY_LEAK;
+#endif
     gtk_status_icon_ = gtk_status_icon_new_from_pixbuf(pixbuf);
   }
   g_object_unref(pixbuf);

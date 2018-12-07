@@ -290,8 +290,14 @@ void PrintDialogGtk::UpdateSettings(printing::PrintSettings* settings) {
           gtk_page_setup_set_paper_size(page_setup_, custom_size);
           gtk_paper_size_free(custom_size);
         }
+#if GTK_CHECK_VERSION(2, 28, 0)
         g_list_free_full(gtk_paper_sizes,
                          reinterpret_cast<GDestroyNotify>(gtk_paper_size_free));
+#else
+        g_list_foreach(gtk_paper_sizes,
+                       reinterpret_cast<GFunc>(gtk_paper_size_free), nullptr);
+        g_list_free(gtk_paper_sizes);
+#endif
       }
     } else {
       VLOG(1) << "Using default paper size";
@@ -479,7 +485,11 @@ void PrintDialogGtk::OnResponse(GtkWidget* dialog, int response_id) {
 
 static void OnJobCompletedThunk(GtkPrintJob* print_job,
                                 gpointer user_data,
+#if GTK_MAJOR_VERSION == 2
+                                GError* error
+#else
                                 const GError* error
+#endif
                                 ) {
   static_cast<PrintDialogGtk*>(user_data)->OnJobCompleted(print_job, error);
 }
