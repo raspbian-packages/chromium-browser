@@ -23,7 +23,6 @@
 #include "content/shell/browser/layout_test/layout_test_browser_context.h"
 #include "content/shell/browser/layout_test/layout_test_browser_main_parts.h"
 #include "content/shell/browser/layout_test/layout_test_message_filter.h"
-#include "content/shell/browser/layout_test/mojo_layout_test_helper.h"
 #include "content/shell/browser/shell_browser_context.h"
 #include "content/shell/common/layout_test/layout_test_switches.h"
 #include "content/shell/common/shell_messages.h"
@@ -40,11 +39,6 @@ namespace content {
 namespace {
 
 LayoutTestContentBrowserClient* g_layout_test_browser_client;
-
-void BindLayoutTestHelper(mojom::MojoLayoutTestHelperRequest request,
-                          RenderFrameHost* render_frame_host) {
-  MojoLayoutTestHelper::Create(std::move(request));
-}
 
 class WebPackageInternalsImpl : public blink::test::mojom::WebPackageInternals {
  public:
@@ -183,7 +177,6 @@ void LayoutTestContentBrowserClient::ExposeInterfacesToRenderer(
       &WebPackageInternalsImpl::Create,
       base::Unretained(
           render_process_host->GetStoragePartition()->GetWebPackageContext())));
-  registry->AddInterface(base::BindRepeating(&MojoLayoutTestHelper::Create));
   registry->AddInterface(
       base::BindRepeating(&LayoutTestContentBrowserClient::BindClipboardHost,
                           base::Unretained(this)),
@@ -305,7 +298,6 @@ bool LayoutTestContentBrowserClient::CanIgnoreCertificateErrorIfNeeded() {
 void LayoutTestContentBrowserClient::ExposeInterfacesToFrame(
     service_manager::BinderRegistryWithArgs<content::RenderFrameHost*>*
         registry) {
-  registry->AddInterface(base::Bind(&BindLayoutTestHelper));
 }
 
 scoped_refptr<LoginDelegate>
