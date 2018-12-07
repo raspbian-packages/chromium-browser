@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define COURGETTE_USE_CRC_LIB
+
 #ifdef COURGETTE_USE_CRC_LIB
 #  include "zlib.h"
 #else
