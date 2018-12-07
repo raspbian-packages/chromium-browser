@@ -65,7 +65,6 @@ group("gn_all") {
     ":gn_visibility",
     "//base:base_perftests",
     "//base:base_unittests",
-    "//chrome/installer",
     "//net:net_unittests",
     "//skia:skia_unittests",
     "//sql:sql_unittests",
