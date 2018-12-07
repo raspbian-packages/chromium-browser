@@ -152,6 +152,7 @@ void ConvertCdmKeysInfo(const media::CdmKeysInfo& keys_info,
 void INITIALIZE_CDM_MODULE() {
   DVLOG(1) << __func__;
   media::InitializeMediaLibrary();
+  av_register_all();
   g_is_cdm_module_initialized = true;
 }
 
