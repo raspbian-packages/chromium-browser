@@ -383,7 +383,7 @@ void CheckClientDownloadRequest::AnalyzeFile() {
   } else if (item_->GetTargetFilePath().MatchesExtension(
                  FILE_PATH_LITERAL(".rar")) &&
              base::FeatureList::IsEnabled(kInspectDownloadedRarFiles)) {
-    StartExtractRarFeatures();
+    LOG(WARNING) << "Safebrowser inspection of rar files is disabled in this build";
 #if defined(OS_MACOSX)
   } else if (item_->GetTargetFilePath().MatchesExtension(
                  FILE_PATH_LITERAL(".dmg")) ||
