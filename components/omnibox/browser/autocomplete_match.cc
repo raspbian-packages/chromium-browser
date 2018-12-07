@@ -141,14 +141,13 @@ AutocompleteMatch::AutocompleteMatch(const AutocompleteMatch& match)
                              ? new AutocompleteMatch(*match.associated_keyword)
                              : nullptr),
       keyword(match.keyword),
-      pedal(match.pedal),
       from_previous(match.from_previous),
       search_terms_args(
           match.search_terms_args
               ? new TemplateURLRef::SearchTermsArgs(*match.search_terms_args)
               : nullptr),
       additional_info(match.additional_info),
-      duplicate_matches(match.duplicate_matches) {}
+      duplicate_matches(match.duplicate_matches) { pedal = match.pedal; }
 
 AutocompleteMatch::~AutocompleteMatch() {
 }
