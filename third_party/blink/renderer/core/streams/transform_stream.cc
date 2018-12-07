@@ -37,7 +37,6 @@ class TransformStream::Algorithm : public ScriptFunction {
     ScriptFunction::Trace(visitor);
   }
 
- protected:
   Algorithm(TransformStreamTransformer* transformer,
             ScriptState* script_state,
             ExceptionState& exception_state)
@@ -46,6 +45,7 @@ class TransformStream::Algorithm : public ScriptFunction {
         interface_name_(exception_state.InterfaceName()),
         property_name_(exception_state.PropertyName()) {}
 
+ protected:
   // AlgorithmScope holds the stack-allocated objects used by the CallRaw()
   // methods for FlushAlgorithm and TransformAlgorithm.
   class AlgorithmScope {
