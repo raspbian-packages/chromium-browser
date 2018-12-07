@@ -2229,9 +2229,3 @@ test("content_perftests") {
     deps += [ "//testing/android/native_test:native_test_native_code" ]
   }
 }
-
-group("fuzzers") {
-  deps = [
-    "//content/test/fuzzer",
-  ]
-}
