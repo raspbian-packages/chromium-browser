@@ -39,7 +39,7 @@ def get_release_version(chrome_version_file, version_info):
                      version_info.revision)
     if not match:
       # revision is not the expected format, probably not in a release branch.
-      return None
+      return "undefined"
 
     # Result is based on Chrome version number, e.g.,
     # '70.0.3516.0 (26c10db8bff36a8b6fc073c0f38b1e9493cabb04)'.
