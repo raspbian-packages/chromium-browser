@@ -367,39 +367,11 @@ config("fx_libopenjpeg_warnings") {
   }
 }
 
-source_set("fx_libopenjpeg") {
-  configs -= [ "//build/config/compiler:chromium_code" ]
-  configs += [
-    "//build/config/compiler:no_chromium_code",
-    "//build/config/sanitizers:cfi_icall_generalize_pointers",
-    ":pdfium_third_party_config",
-
-    # Must be after no_chromium_code for warning flags to be ordered correctly.
-    ":fx_libopenjpeg_warnings",
-  ]
-  sources = [
-    "libopenjpeg20/bio.c",
-    "libopenjpeg20/cio.c",
-    "libopenjpeg20/dwt.c",
-    "libopenjpeg20/event.c",
-    "libopenjpeg20/function_list.c",
-    "libopenjpeg20/image.c",
-    "libopenjpeg20/invert.c",
-    "libopenjpeg20/j2k.c",
-    "libopenjpeg20/jp2.c",
-    "libopenjpeg20/mct.c",
-    "libopenjpeg20/mqc.c",
-    "libopenjpeg20/openjpeg.c",
-    "libopenjpeg20/opj_clock.c",
-    "libopenjpeg20/pi.c",
-    "libopenjpeg20/sparse_array.c",
-    "libopenjpeg20/sparse_array.h",
-    "libopenjpeg20/t1.c",
-    "libopenjpeg20/t2.c",
-    "libopenjpeg20/tcd.c",
-    "libopenjpeg20/tgt.c",
-    "libopenjpeg20/thread.c",
-  ]
+pkg_config("libopenjpeg_from_pkgconfig") {
+  packages = [ "libopenjp2" ]
+}
+group("fx_libopenjpeg") {
+  public_configs = [ ":libopenjpeg_from_pkgconfig" ]
 }
 
 config("system_libpng_config") {
